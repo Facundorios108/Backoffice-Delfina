@@ -571,13 +571,13 @@
             return (
                 <>
                     {/* Logo Centrado */}
-                    <div className="flex justify-center items-center px-8 pt-8 pb-6 bg-background-light">
-                        <div className="w-56 h-56 flex items-center justify-center">
-                            <img src="logo-delfina-dashboard.png" alt="Delfina Logo" className="w-full h-full object-contain" />
+                    <div className="flex justify-center items-center px-4 py-3 bg-background-light">
+                        <div className="w-full max-w-sm flex items-center justify-center">
+                            <img src="logo-delfina-dashboard.png" alt="Delfina Logo" style={{maxWidth: '100%', height: 'auto', maxHeight: '120px'}} />
                         </div>
                     </div>
 
-                    <main ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-4 space-y-8 hide-scrollbar">
+                    <main ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-3 space-y-4 hide-scrollbar">
                         <section className="w-full flex flex-col gap-4">
                             <div className="w-full bg-primary rounded-2xl p-6 shadow-glow text-white relative overflow-hidden flex flex-col justify-center h-[200px] group">
                                 <div className="absolute right-0 top-0 w-40 h-40 bg-white/10 rounded-full -mr-16 -mt-16 pointer-events-none group-hover:scale-110 transition-transform duration-500"></div>
