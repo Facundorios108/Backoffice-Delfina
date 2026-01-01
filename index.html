@@ -188,27 +188,45 @@
 
             // 1. Efecto de Autenticación
             useEffect(() => {
+                console.log('🔐 Iniciando proceso de autenticación...');
                 const checkFirebase = setInterval(() => {
                     if (window.firebaseData) {
                         clearInterval(checkFirebase);
+                        console.log('✅ Firebase inicializado');
                         const { auth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } = window.firebaseData;
 
                         const initAuth = async () => {
                             try {
+                                console.log('🔑 Intentando autenticación...');
                                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                    console.log('🎫 Usando token personalizado');
                                     await signInWithCustomToken(auth, __initial_auth_token);
                                 } else {
-                                    await signInAnonymously(auth);
+                                    console.log('👤 Usando autenticación anónima');
+                                    const result = await signInAnonymously(auth);
+                                    console.log('✅ Autenticación anónima exitosa:', result.user.uid);
                                 }
                             } catch (error) {
-                                console.error("Error en auth:", error);
+                                console.error("❌ Error en auth:", error.code, error.message);
                                 // Fallback a anónimo si falla el token custom (común en despliegue manual)
-                                try { await signInAnonymously(auth); } catch(e) { console.error("Auth anónimo falló:", e); }
+                                try { 
+                                    console.log('🔄 Reintentando con auth anónimo...');
+                                    const result = await signInAnonymously(auth); 
+                                    console.log('✅ Fallback exitoso:', result.user.uid);
+                                } catch(e) { 
+                                    console.error("❌ Auth anónimo falló:", e.code, e.message); 
+                                    alert('Error de autenticación: ' + e.message + '. Verifica tu conexión a internet y recarga la página.');
+                                }
                             }
                         };
 
                         initAuth();
                         onAuthStateChanged(auth, (u) => {
+                            if (u) {
+                                console.log('👤 Usuario autenticado:', u.uid);
+                            } else {
+                                console.log('⚠️ Sin usuario autenticado');
+                            }
                             setUser(u);
                             if (!u) {
                                 setTransactions([]);
@@ -311,28 +329,62 @@
 
             // --- HANDLERS ---
             const handleSaveTransaction = async (txData) => {
-                if (!user) return;
+                console.log('💾 handleSaveTransaction llamado con:', txData);
+                if (!user) {
+                    console.error('❌ No hay usuario autenticado');
+                    alert('Error: No hay usuario autenticado. Recarga la página.');
+                    return;
+                }
+                if (!window.firebaseData) {
+                    console.error('❌ Firebase no está inicializado');
+                    alert('Error: Firebase no está listo. Recarga la página.');
+                    return;
+                }
                 const { db, appId, collection, addDoc, updateDoc, doc, serverTimestamp } = window.firebaseData;
                 const collectionRef = collection(db, 'artifacts', appId, 'users', user.uid, 'transactions');
                 const cleanData = { ...txData, amount: parseFloat(txData.amount) };
 
                 try {
                     if (editingTransaction) {
+                        console.log('📝 Editando transacción:', txData.id);
                         const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', txData.id);
                         const { id, createdAt, ...dataToUpdate } = cleanData; 
                         await updateDoc(docRef, dataToUpdate);
+                        console.log('✅ Transacción actualizada');
                     } else {
+                        console.log('➕ Creando nueva transacción');
                         const { id, ...newTxData } = cleanData; 
                         await addDoc(collectionRef, { ...newTxData, createdAt: serverTimestamp() });
+                        console.log('✅ Transacción creada');
                     }
-                } catch (e) { alert("Error al guardar."); console.error(e); }
+                } catch (e) { 
+                    console.error('❌ Error al guardar transacción:', e);
+                    alert(`Error al guardar: ${e.message}`); 
+                    return;
+                }
                 setShowTransactionModal(false); setEditingTransaction(null);
             };
 
             const handleDeleteTransaction = async (id) => {
-                if (!user) return;
+                console.log('🗑️ handleDeleteTransaction llamado con id:', id);
+                if (!user) {
+                    console.error('❌ No hay usuario autenticado');
+                    alert('Error: No hay usuario autenticado.');
+                    return;
+                }
+                if (!window.firebaseData) {
+                    console.error('❌ Firebase no está inicializado');
+                    alert('Error: Firebase no está listo.');
+                    return;
+                }
                 const { db, appId, deleteDoc, doc } = window.firebaseData;
-                try { await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', id)); } catch (e) { console.error(e); }
+                try { 
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', id)); 
+                    console.log('✅ Transacción eliminada');
+                } catch (e) { 
+                    console.error('❌ Error al eliminar:', e);
+                    alert(`Error al eliminar: ${e.message}`);
+                }
                 setShowTransactionModal(false); setEditingTransaction(null);
             };
 
@@ -364,10 +416,20 @@
 
             // --- FAB Logic ---
             const handleFabClick = () => {
+                console.log('🎯 FAB clickeado, tab activo:', activeTab);
+                console.log('👤 Usuario actual:', user ? user.uid : 'NO AUTENTICADO');
+                
+                if (!user) {
+                    alert('Esperando autenticación... Por favor, espera unos segundos y vuelve a intentar.');
+                    return;
+                }
+                
                 if (activeTab === 'stock') {
+                    console.log('📦 Abriendo modal de stock');
                     setEditingStock(null);
                     setShowStockModal(true);
                 } else {
+                    console.log('💰 Abriendo modal de transacción');
                     setEditingTransaction(null);
                     setShowTransactionModal(true);
                 }
