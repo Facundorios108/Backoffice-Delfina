@@ -161,17 +161,22 @@
         ];
 
         const TRANSACTION_CATEGORIES = [
-            { id: 'insumos', name: 'Insumos', icon: 'shopping_bag' },
-            { id: 'merceria', name: 'Merceria', icon: 'checkroom' },
+            { id: 'musculosas', name: 'Musculosas', icon: 'checkroom' },
+            { id: 'remeras', name: 'Remeras', icon: 'storefront' },
+            { id: 'merceria', name: 'Mercería', icon: 'shopping_bag' },
+            { id: 'online', name: 'Venta Online', icon: 'shopping_cart' },
             { id: 'logistica', name: 'Logística', icon: 'local_shipping' },
             { id: 'marketing', name: 'Marketing', icon: 'campaign' },
-            { id: 'online', name: 'Venta Online', icon: 'shopping_cart' },
-            { id: 'prendas', name: 'Prendas', icon: 'storefront' },
         ];
 
         const PAYMENT_METHODS = [
             { id: 'transferencia', name: 'Transferencia', icon: 'account_balance' },
             { id: 'efectivo', name: 'Efectivo', icon: 'payments' },
+        ];
+
+        const PRODUCT_TYPES = [
+            { id: 'musculosa', name: 'Musculosa' },
+            { id: 'remera', name: 'Remera' },
         ];
 
         const MUSCULOSA_DESIGNS = [
@@ -406,9 +411,10 @@
                         console.log('✅ Transacción creada');
                         
                         // Si es venta online, descontar del stock por color y talle
-                        if (txData.category === 'online' && txData.musculosaColor && txData.musculosaSize) {
+                        if (txData.category === 'online' && txData.productType && txData.musculosaColor && txData.musculosaSize) {
                             try {
                                 console.log('🛒 Procesando descuento de stock:', {
+                                    tipo: txData.productType,
                                     color: txData.musculosaColor,
                                     talle: txData.musculosaSize
                                 });
@@ -423,10 +429,13 @@
                                     }, reject);
                                 });
                                 
-                                // Buscar la prenda que coincida con el color
+                                // Determinar el nombre de la prenda a buscar según el tipo
+                                const productName = txData.productType === 'musculosa' ? 'musculosa' : 'remera';
+                                
+                                // Buscar la prenda que coincida con el tipo y color
                                 const matchingItem = stockSnapshot.docs.find(docSnap => {
                                     const data = docSnap.data();
-                                    const matchName = data.name && data.name.toLowerCase().includes('musculosa');
+                                    const matchName = data.name && data.name.toLowerCase().includes(productName);
                                     const matchColor = data.category === txData.musculosaColor;
                                     return matchName && matchColor;
                                 });
@@ -450,7 +459,7 @@
                                         nuevo: newStock
                                     });
                                 } else {
-                                    console.warn('⚠️ No se encontró en stock: Musculosa', txData.musculosaColor);
+                                    console.warn('⚠️ No se encontró en stock:', productName, txData.musculosaColor);
                                 }
                             } catch (stockError) {
                                 console.error('❌ Error al actualizar stock:', stockError);
@@ -588,10 +597,10 @@
             const chartData = useMemo(() => {
                 if (!transactions || transactions.length === 0) return null;
                 
-                // Calcular fecha de inicio (2 semanas atrás)
+                // Calcular fecha de inicio (1 semana atrás)
                 const now = new Date();
-                const twoWeeksAgo = new Date(now.getTime() - (14 * 24 * 60 * 60 * 1000));
-                twoWeeksAgo.setHours(0, 0, 0, 0);
+                const oneWeekAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+                oneWeekAgo.setHours(0, 0, 0, 0);
                 
                 // Ordenar todas las transacciones
                 const sorted = [...transactions].sort((a, b) => {
@@ -608,26 +617,26 @@
                     const amount = tx.type === 'income' ? parseFloat(tx.amount) : -parseFloat(tx.amount);
                     const dateVal = tx.createdAt?.seconds ? (tx.createdAt.seconds * 1000) : new Date(tx.fullDate).getTime();
                     
-                    if (dateVal < twoWeeksAgo.getTime()) {
-                        // Transacciones antes de las 2 semanas: solo sumar al balance inicial
+                    if (dateVal < oneWeekAgo.getTime()) {
+                        // Transacciones antes de la semana: solo sumar al balance inicial
                         initialBalance += amount;
                     } else {
-                        // Transacciones dentro de las 2 semanas: agregar a dataPoints
+                        // Transacciones dentro de la semana: agregar a dataPoints
                         initialBalance += amount;
                         dataPoints.push({ date: dateVal, balance: initialBalance });
                     }
                 });
                 
-                // Si no hay puntos en las 2 semanas, crear una línea plana
+                // Si no hay puntos en la semana, crear una línea plana
                 if (dataPoints.length === 0) {
                     dataPoints = [
-                        { date: twoWeeksAgo.getTime(), balance: initialBalance },
+                        { date: oneWeekAgo.getTime(), balance: initialBalance },
                         { date: now.getTime(), balance: initialBalance }
                     ];
                 } else {
                     // Agregar punto inicial si el primero no está al inicio
-                    if (dataPoints[0].date > twoWeeksAgo.getTime()) {
-                        dataPoints.unshift({ date: twoWeeksAgo.getTime(), balance: dataPoints[0].balance - (dataPoints[0].date > twoWeeksAgo.getTime() ? 0 : 0) });
+                    if (dataPoints[0].date > oneWeekAgo.getTime()) {
+                        dataPoints.unshift({ date: oneWeekAgo.getTime(), balance: dataPoints[0].balance - (dataPoints[0].date > oneWeekAgo.getTime() ? 0 : 0) });
                     }
                     // Recalcular desde el balance inicial
                     let runningBalance = initialBalance - dataPoints.reduce((sum, dp) => {
@@ -638,10 +647,10 @@
                         return tx ? sum + (tx.type === 'income' ? parseFloat(tx.amount) : -parseFloat(tx.amount)) : sum;
                     }, 0);
                     
-                    dataPoints = [{ date: twoWeeksAgo.getTime(), balance: runningBalance }];
+                    dataPoints = [{ date: oneWeekAgo.getTime(), balance: runningBalance }];
                     sorted.forEach(tx => {
                         const dateVal = tx.createdAt?.seconds ? (tx.createdAt.seconds * 1000) : new Date(tx.fullDate).getTime();
-                        if (dateVal >= twoWeeksAgo.getTime()) {
+                        if (dateVal >= oneWeekAgo.getTime()) {
                             const amount = tx.type === 'income' ? parseFloat(tx.amount) : -parseFloat(tx.amount);
                             runningBalance += amount;
                             dataPoints.push({ date: dateVal, balance: runningBalance });
@@ -657,7 +666,7 @@
                 const width = 350; const height = 150; const padding = 20;
                 const minVal = Math.min(...dataPoints.map(d => d.balance), 0) - 100;
                 const maxVal = Math.max(...dataPoints.map(d => d.balance)) + 100;
-                const minDate = twoWeeksAgo.getTime();
+                const minDate = oneWeekAgo.getTime();
                 const maxDate = now.getTime();
                 const rangeY = maxVal - minVal || 1;
                 const rangeX = maxDate - minDate || 1;
@@ -665,13 +674,22 @@
                 const points = dataPoints.map(d => {
                     const x = ((d.date - minDate) / rangeX) * width;
                     const y = height - padding - (((d.balance - minVal) / rangeY) * (height - (padding * 2)));
-                    return `${x},${y}`;
+                    return { x, y };
                 });
 
-                const linePath = `M ${points.join(' L ')}`;
-                const areaPath = `M ${points[0].split(',')[0]},${height} L ${points.join(' L ')} L ${points[points.length-1].split(',')[0]},${height} Z`;
-                const [lastX, lastY] = points[points.length - 1].split(',');
-                const startDateStr = new Date(twoWeeksAgo).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                // Crear curva suave usando bezier
+                let linePath = `M ${points[0].x},${points[0].y}`;
+                for (let i = 1; i < points.length; i++) {
+                    const curr = points[i];
+                    const prev = points[i - 1];
+                    const cpx = prev.x + (curr.x - prev.x) * 0.5;
+                    linePath += ` Q ${cpx},${prev.y} ${cpx},${(prev.y + curr.y) / 2}`;
+                    linePath += ` Q ${cpx},${curr.y} ${curr.x},${curr.y}`;
+                }
+                const areaPath = `M ${points[0].x},${height} L ${points[0].x},${points[0].y} ${linePath.substring(2)} L ${points[points.length-1].x},${height} Z`;
+                const lastX = points[points.length - 1].x;
+                const lastY = points[points.length - 1].y;
+                const startDateStr = new Date(oneWeekAgo).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
                 const endDateStr = new Date(now).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 
                 return { linePath, areaPath, lastX, lastY, startDateStr, endDateStr };
@@ -1071,10 +1089,29 @@
                                     // Calcular total para la tarjeta
                                     const totalStock = (item.stock?.s || 0) + (item.stock?.m || 0) + (item.stock?.l || 0) + (item.stock?.xl || 0);
                                     
+                                    // Etiqueta de color
+                                    const colorLabels = {
+                                        azul: 'Azul', blanco: 'Blanco', chocolate: 'Choco',
+                                        gris_petroleo: 'Gris', negro: 'Negro', verde: 'Verde'
+                                    };
+                                    const colorCodes = {
+                                        azul: '#3b82f6', blanco: '#f3f4f6', chocolate: '#7B3F00',
+                                        gris_petroleo: '#374151', negro: '#000000', verde: '#22c55e'
+                                    };
+                                    
                                     return (
                                         <div key={item.id} onClick={() => onItemClick(item)} className="bg-white p-3 rounded-2xl shadow-soft border border-pink-50 flex items-center gap-4 transition-transform active:scale-[0.99] cursor-pointer">
                                             <div className="h-20 w-20 shrink-0 rounded-xl overflow-hidden relative bg-gray-100 flex items-center justify-center text-primary">
                                                 <span className="material-symbols-outlined !text-[32px]">checkroom</span>
+                                                {item.category && (
+                                                    <div className="absolute bottom-1 right-1 px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm" style={{ 
+                                                        backgroundColor: colorCodes[item.category],
+                                                        color: item.category === 'blanco' ? '#000' : '#fff',
+                                                        border: item.category === 'blanco' ? '1px solid #d1d5db' : 'none'
+                                                    }}>
+                                                        {colorLabels[item.category]}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex justify-between items-start">
@@ -1163,10 +1200,14 @@
                     <main className="flex-1 overflow-y-auto px-6 py-2 space-y-6 pb-32">
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="bg-white rounded-2xl shadow-soft p-6 space-y-5 border border-pink-50">
-                                {/* Nombre */}
+                                {/* Tipo de prenda */}
                                 <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-text-main ml-1">Nombre de la prenda</label>
-                                    <input value={name} onChange={e => setName(e.target.value)} className="block w-full px-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary focus:border-primary sm:text-sm placeholder-gray-400" placeholder="Ej: Remera Musculosa" />
+                                    <label className="text-sm font-medium text-text-main ml-1">Tipo de Prenda</label>
+                                    <select value={name} onChange={e => setName(e.target.value)} className="block w-full px-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary focus:border-primary sm:text-sm">
+                                        <option value="">Seleccionar tipo...</option>
+                                        <option value="Remera Musculosa">Musculosa</option>
+                                        <option value="Remera">Remera</option>
+                                    </select>
                                 </div>
                                 {/* Colección */}
                                 <div className="space-y-1.5">
@@ -1254,7 +1295,7 @@
                 const paymentMethodCounts = { transferencia: 0, efectivo: 0 };
                 const paymentMethodIncome = { transferencia: 0, efectivo: 0 };
                 const expenseByCategory = {
-                    insumos: 0, merceria: 0, logistica: 0, marketing: 0
+                    musculosas: 0, remeras: 0, merceria: 0, logistica: 0, marketing: 0
                 };
                 
                 // Análisis mensual (este mes vs mes anterior)
@@ -1411,14 +1452,17 @@
             
             // Calcular valor del inventario
             const inventoryValue = useMemo(() => {
+                console.log('📊 Recalculando inventoryValue con stockItems:', stockItems.length, 'items');
                 let totalUnits = 0;
                 const stockByColor = {
                     azul: 0, blanco: 0, chocolate: 0,
                     gris_petroleo: 0, negro: 0, verde: 0
                 };
                 const stockByColorAndSize = {};
+                const productTypesByColor = {}; // Nuevo: guardar tipos de prenda por color
                 
                 stockItems.forEach(item => {
+                    console.log('  📦 Procesando item:', item.name, 'Color:', item.category);
                     const itemTotal = (item.stock?.s || 0) + (item.stock?.m || 0) + 
                                      (item.stock?.l || 0) + (item.stock?.xl || 0);
                     totalUnits += itemTotal;
@@ -1435,11 +1479,26 @@
                         stockByColorAndSize[item.category].m += (item.stock?.m || 0);
                         stockByColorAndSize[item.category].l += (item.stock?.l || 0);
                         stockByColorAndSize[item.category].xl += (item.stock?.xl || 0);
+                        
+                        // Guardar tipos de prenda (Musculosa/Remera)
+                        if (!productTypesByColor[item.category]) {
+                            productTypesByColor[item.category] = [];
+                        }
+                        const itemName = item.name || '';
+                        const isMusculosa = itemName.toLowerCase().includes('musculosa');
+                        const isRemera = itemName.toLowerCase().includes('remera') && !isMusculosa;
+                        const type = isMusculosa ? 'Musculosa' : isRemera ? 'Remera' : 'Prenda';
+                        if (!productTypesByColor[item.category].includes(type)) {
+                            productTypesByColor[item.category].push(type);
+                        }
+                    } else {
+                        console.warn('  ⚠️ Color no reconocido o faltante:', item.category);
                     }
                 });
                 
+                console.log('📊 Resultado inventoryValue:', { totalUnits, stockByColor, productTypesByColor });
                 const totalValue = totalUnits * 35000;
-                return { totalUnits, totalValue, stockByColor, stockByColorAndSize };
+                return { totalUnits, totalValue, stockByColor, stockByColorAndSize, productTypesByColor };
             }, [stockItems]);
             
             return (
@@ -1616,34 +1675,34 @@
                             <h3 className="text-text-main font-bold text-xl mb-5">Métodos de Pago</h3>
                             <div className="space-y-4">
                                 <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                                    <div className="flex items-center justify-between gap-6">
-                                        <div className="flex items-center gap-3 flex-1">
-                                            <div className="bg-blue-500 rounded-full p-2">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="bg-blue-500 rounded-full p-2 shrink-0">
                                                 <span className="material-symbols-outlined text-white !text-[24px]">account_balance</span>
                                             </div>
-                                            <div>
+                                            <div className="min-w-0">
                                                 <p className="text-sm font-semibold text-blue-600">Transferencia</p>
-                                                <p className="text-xs text-blue-500 mt-1">{analyticsData.paymentMethodCounts.transferencia} transacciones</p>
+                                                <p className="text-xs text-blue-500 mt-1 whitespace-nowrap">{analyticsData.paymentMethodCounts.transferencia} transacciones</p>
                                             </div>
                                         </div>
-                                        <div className="text-right shrink-0">
-                                            <p className="text-2xl font-bold text-blue-700">${analyticsData.paymentMethodIncome.transferencia.toLocaleString()}</p>
+                                        <div className="text-right shrink-0 ml-2">
+                                            <p className="text-lg font-bold text-blue-700 whitespace-nowrap">${analyticsData.paymentMethodIncome.transferencia.toLocaleString()}</p>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="bg-green-50 rounded-xl p-6 border border-green-200">
-                                    <div className="flex items-center justify-between gap-6">
-                                        <div className="flex items-center gap-3 flex-1">
-                                            <div className="bg-green-500 rounded-full p-2">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="bg-green-500 rounded-full p-2 shrink-0">
                                                 <span className="material-symbols-outlined text-white !text-[24px]">payments</span>
                                             </div>
-                                            <div>
+                                            <div className="min-w-0">
                                                 <p className="text-sm font-semibold text-green-600">Efectivo</p>
-                                                <p className="text-xs text-green-500 mt-1">{analyticsData.paymentMethodCounts.efectivo} transacciones</p>
+                                                <p className="text-xs text-green-500 mt-1 whitespace-nowrap">{analyticsData.paymentMethodCounts.efectivo} transacciones</p>
                                             </div>
                                         </div>
-                                        <div className="text-right shrink-0">
-                                            <p className="text-2xl font-bold text-green-700">${analyticsData.paymentMethodIncome.efectivo.toLocaleString()}</p>
+                                        <div className="text-right shrink-0 ml-2">
+                                            <p className="text-lg font-bold text-green-700 whitespace-nowrap">${analyticsData.paymentMethodIncome.efectivo.toLocaleString()}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1660,11 +1719,11 @@
                                     .map(([category, amount]) => {
                                         const barWidth = analyticsData.totalExpense > 0 ? (amount / analyticsData.totalExpense) * 100 : 0;
                                         const categoryLabels = {
-                                            insumos: 'Insumos', merceria: 'Mercería',
+                                            musculosas: 'Musculosas', remeras: 'Remeras', merceria: 'Mercería',
                                             logistica: 'Logística', marketing: 'Marketing'
                                         };
                                         const categoryColors = {
-                                            insumos: '#f59e0b', merceria: '#8b5cf6',
+                                            musculosas: '#f59e0b', remeras: '#10b981', merceria: '#8b5cf6',
                                             logistica: '#06b6d4', marketing: '#ec4899'
                                         };
                                         return (
@@ -1713,12 +1772,24 @@
                                             gris_petroleo: '#374151', negro: '#000000', verde: '#22c55e'
                                         };
                                         const sizes = inventoryValue.stockByColorAndSize[color] || { s: 0, m: 0, l: 0, xl: 0 };
+                                        const productTypes = inventoryValue.productTypesByColor?.[color] || [];
                                         return (
                                             <div key={color} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div className="flex items-center gap-3">
                                                         <div className={`w-6 h-6 rounded-full ${color === 'blanco' ? 'border-2 border-gray-300' : ''}`} style={{backgroundColor: colorCodes[color]}}></div>
-                                                        <span className="font-bold text-text-main text-lg">{colorLabels[color]}</span>
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-text-main text-lg">{colorLabels[color]}</span>
+                                                            {productTypes.length > 0 && (
+                                                                <div className="flex gap-1.5 mt-1">
+                                                                    {productTypes.map(type => (
+                                                                        <span key={type} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                                                                            {type}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     <span className="text-xl font-bold text-primary">{count}</span>
                                                 </div>
@@ -1854,6 +1925,7 @@
             const [date, setDate] = useState(initialData?.fullDate || getLocalDateISO());
             
             // Estados para venta online
+            const [productType, setProductType] = useState(initialData?.productType || '');
             const [musculosaDesign, setMusculosaDesign] = useState(initialData?.musculosaDesign || '');
             const [musculosaCustomDesign, setMusculosaCustomDesign] = useState(initialData?.musculosaCustomDesign || '');
             const [musculosaColor, setMusculosaColor] = useState(initialData?.musculosaColor || '');
@@ -1865,8 +1937,12 @@
                 
                 // Validar campos de venta online
                 if (category === 'online') {
+                    if (!productType) {
+                        alert('Por favor selecciona el tipo de prenda (Musculosa o Remera)');
+                        return;
+                    }
                     if (!musculosaDesign || !musculosaColor || !musculosaSize) {
-                        alert('Por favor completa todos los campos de la musculosa (Diseño, Color y Talle)');
+                        alert('Por favor completa todos los campos de la prenda (Diseño, Color y Talle)');
                         return;
                     }
                     if (musculosaDesign === 'otro' && !musculosaCustomDesign) {
@@ -1879,11 +1955,12 @@
                 
                 // Construir título automático para venta online
                 let finalTitle = desc || 'Movimiento';
-                if (category === 'online' && musculosaColor && musculosaSize && musculosaDesign) {
+                if (category === 'online' && productType && musculosaColor && musculosaSize && musculosaDesign) {
                     const colorName = MUSCULOSA_COLORS.find(c => c.id === musculosaColor)?.name || musculosaColor;
                     const sizeName = musculosaSize.toUpperCase();
                     const designName = musculosaDesign === 'otro' ? musculosaCustomDesign : MUSCULOSA_DESIGNS.find(d => d.id === musculosaDesign)?.name;
-                    finalTitle = `Musculosa ${colorName} talle ${sizeName} - ${designName}`;
+                    const productName = PRODUCT_TYPES.find(p => p.id === productType)?.name || productType;
+                    finalTitle = `${productName} ${colorName} talle ${sizeName} - ${designName}`;
                     if (desc) finalTitle += ` (${desc})`;
                 }
                 
@@ -1900,7 +1977,8 @@
                     paymentMethod: paymentMethod || 'transferencia'
                 };
                 
-                // Solo agregar campos de musculosa si tienen valor
+                // Solo agregar campos de prenda si tienen valor
+                if (productType) newTx.productType = productType;
                 if (musculosaDesign) newTx.musculosaDesign = musculosaDesign;
                 if (musculosaCustomDesign) newTx.musculosaCustomDesign = musculosaCustomDesign;
                 if (musculosaColor) newTx.musculosaColor = musculosaColor;
@@ -1937,6 +2015,16 @@
                                 
                                 {category === 'online' && (
                                     <>
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-medium text-text-main ml-1">Tipo de Prenda <span className="text-primary">*</span></label>
+                                            <select value={productType} onChange={(e) => setProductType(e.target.value)} className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary focus:border-primary sm:text-sm">
+                                                <option value="">Seleccionar tipo...</option>
+                                                {PRODUCT_TYPES.map((type) => (
+                                                    <option key={type.id} value={type.id}>{type.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-medium text-text-main ml-1">Diseño <span className="text-primary">*</span></label>
                                             <select value={musculosaDesign} onChange={(e) => setMusculosaDesign(e.target.value)} className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary focus:border-primary sm:text-sm">
