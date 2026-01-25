@@ -582,27 +582,78 @@
         function FinancialChart({ transactions }) {
             const chartData = useMemo(() => {
                 if (!transactions || transactions.length === 0) return null;
+                
+                // Calcular fecha de inicio (2 semanas atrás)
+                const now = new Date();
+                const twoWeeksAgo = new Date(now.getTime() - (14 * 24 * 60 * 60 * 1000));
+                twoWeeksAgo.setHours(0, 0, 0, 0);
+                
+                // Ordenar todas las transacciones
                 const sorted = [...transactions].sort((a, b) => {
                     const dateA = a.createdAt?.seconds ? new Date(a.createdAt.seconds * 1000) : new Date(a.fullDate);
                     const dateB = b.createdAt?.seconds ? new Date(b.createdAt.seconds * 1000) : new Date(b.fullDate);
                     return dateA - dateB;
                 });
                 
-                let currentBalance = 0;
-                let dataPoints = sorted.map(tx => {
+                // Calcular el balance inicial (desde todas las transacciones antes de las 2 semanas)
+                let initialBalance = 0;
+                let dataPoints = [];
+                
+                sorted.forEach(tx => {
                     const amount = tx.type === 'income' ? parseFloat(tx.amount) : -parseFloat(tx.amount);
-                    currentBalance += amount;
                     const dateVal = tx.createdAt?.seconds ? (tx.createdAt.seconds * 1000) : new Date(tx.fullDate).getTime();
-                    return { date: dateVal, balance: currentBalance };
+                    
+                    if (dateVal < twoWeeksAgo.getTime()) {
+                        // Transacciones antes de las 2 semanas: solo sumar al balance inicial
+                        initialBalance += amount;
+                    } else {
+                        // Transacciones dentro de las 2 semanas: agregar a dataPoints
+                        initialBalance += amount;
+                        dataPoints.push({ date: dateVal, balance: initialBalance });
+                    }
                 });
-
-                if (dataPoints.length === 1) dataPoints.unshift({ date: dataPoints[0].date - 86400000, balance: 0 });
+                
+                // Si no hay puntos en las 2 semanas, crear una línea plana
+                if (dataPoints.length === 0) {
+                    dataPoints = [
+                        { date: twoWeeksAgo.getTime(), balance: initialBalance },
+                        { date: now.getTime(), balance: initialBalance }
+                    ];
+                } else {
+                    // Agregar punto inicial si el primero no está al inicio
+                    if (dataPoints[0].date > twoWeeksAgo.getTime()) {
+                        dataPoints.unshift({ date: twoWeeksAgo.getTime(), balance: dataPoints[0].balance - (dataPoints[0].date > twoWeeksAgo.getTime() ? 0 : 0) });
+                    }
+                    // Recalcular desde el balance inicial
+                    let runningBalance = initialBalance - dataPoints.reduce((sum, dp) => {
+                        const tx = sorted.find(t => {
+                            const d = t.createdAt?.seconds ? (t.createdAt.seconds * 1000) : new Date(t.fullDate).getTime();
+                            return d === dp.date;
+                        });
+                        return tx ? sum + (tx.type === 'income' ? parseFloat(tx.amount) : -parseFloat(tx.amount)) : sum;
+                    }, 0);
+                    
+                    dataPoints = [{ date: twoWeeksAgo.getTime(), balance: runningBalance }];
+                    sorted.forEach(tx => {
+                        const dateVal = tx.createdAt?.seconds ? (tx.createdAt.seconds * 1000) : new Date(tx.fullDate).getTime();
+                        if (dateVal >= twoWeeksAgo.getTime()) {
+                            const amount = tx.type === 'income' ? parseFloat(tx.amount) : -parseFloat(tx.amount);
+                            runningBalance += amount;
+                            dataPoints.push({ date: dateVal, balance: runningBalance });
+                        }
+                    });
+                    
+                    // Agregar punto final (hoy) si es necesario
+                    if (dataPoints[dataPoints.length - 1].date < now.getTime()) {
+                        dataPoints.push({ date: now.getTime(), balance: dataPoints[dataPoints.length - 1].balance });
+                    }
+                }
 
                 const width = 350; const height = 150; const padding = 20;
-                const minVal = Math.min(...dataPoints.map(d => d.balance), 0);
-                const maxVal = Math.max(...dataPoints.map(d => d.balance));
-                const minDate = Math.min(...dataPoints.map(d => d.date));
-                const maxDate = Math.max(...dataPoints.map(d => d.date));
+                const minVal = Math.min(...dataPoints.map(d => d.balance), 0) - 100;
+                const maxVal = Math.max(...dataPoints.map(d => d.balance)) + 100;
+                const minDate = twoWeeksAgo.getTime();
+                const maxDate = now.getTime();
                 const rangeY = maxVal - minVal || 1;
                 const rangeX = maxDate - minDate || 1;
 
@@ -615,8 +666,8 @@
                 const linePath = `M ${points.join(' L ')}`;
                 const areaPath = `M ${points[0].split(',')[0]},${height} L ${points.join(' L ')} L ${points[points.length-1].split(',')[0]},${height} Z`;
                 const [lastX, lastY] = points[points.length - 1].split(',');
-                const startDateStr = new Date(minDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-                const endDateStr = new Date(maxDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                const startDateStr = new Date(twoWeeksAgo).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                const endDateStr = new Date(now).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 
                 return { linePath, areaPath, lastX, lastY, startDateStr, endDateStr };
             }, [transactions]);
@@ -770,7 +821,13 @@
 
                     let catMatch = filterCategory === 'all' || tx.category === filterCategory;
                     let typeMatch = filterType === 'all' || tx.type === filterType;
-                    let paymentMatch = filterPaymentMethod === 'all' || tx.paymentMethod === filterPaymentMethod;
+                    
+                    // Filtro de método de pago: si está activo, solo mostrar las que coincidan
+                    let paymentMatch = true;
+                    if (filterPaymentMethod !== 'all') {
+                        // Si hay filtro activo, solo mostrar transacciones con ese método específico
+                        paymentMatch = tx.paymentMethod === filterPaymentMethod;
+                    }
 
                     return dateMatch && catMatch && typeMatch && paymentMatch;
                 });
@@ -812,9 +869,9 @@
             }
 
             const getPaymentMethodLabel = () => {
-                if (filterPaymentMethod === 'all') return 'Método de Pago';
+                if (filterPaymentMethod === 'all') return 'Pago';
                 const method = PAYMENT_METHODS.find(m => m.id === filterPaymentMethod);
-                return method ? method.name : 'Método de Pago';
+                return method ? method.name : 'Pago';
             }
 
             return (
