@@ -429,13 +429,18 @@
                                     }, reject);
                                 });
                                 
-                                // Determinar el nombre de la prenda a buscar según el tipo
+                                // Determinar el tipo de prenda a buscar según el tipo
                                 const productName = txData.productType === 'musculosa' ? 'musculosa' : 'remera';
                                 
                                 // Buscar la prenda que coincida con el tipo y color
                                 const matchingItem = stockSnapshot.docs.find(docSnap => {
                                     const data = docSnap.data();
-                                    const matchName = data.name && data.name.toLowerCase().includes(productName);
+                                    const itemName = (data.name || '').toLowerCase();
+                                    const isMusculosa = itemName.includes('musculosa');
+                                    const isRemera = itemName.includes('remera');
+                                    const matchName = txData.productType === 'musculosa'
+                                        ? isMusculosa
+                                        : (txData.productType === 'remera' && isRemera && !isMusculosa);
                                     const matchColor = data.category === txData.musculosaColor;
                                     return matchName && matchColor;
                                 });
@@ -1276,22 +1281,36 @@
         // --- PANTALLA DE ANALYTICS ---
         function AnalyticsScreen({ onClose, transactions, stockItems }) {
             const scrollRef = useRef(null);
+            const [analyticsProductType, setAnalyticsProductType] = useState('musculosa');
+            const [stockProductType, setStockProductType] = useState('remera');
             
             const analyticsData = useMemo(() => {
                 let totalIncome = 0;
                 let totalExpense = 0;
-                let musculosasSold = 0;
+                const soldByProduct = { musculosa: 0, remera: 0 };
                 
                 // Contadores para análisis
-                const designCounts = {
+                const baseDesignCounts = {
                     pimiento: 0, medusa: 0, concha_de_mar: 0,
                     saturno_rojo: 0, saturno_azul: 0, aceitunas: 0, otro: 0
                 };
-                const colorCounts = {
+                const baseColorCounts = {
                     azul: 0, blanco: 0, chocolate: 0,
                     gris_petroleo: 0, negro: 0, verde: 0
                 };
-                const sizeCounts = { s: 0, m: 0, l: 0, xl: 0 };
+                const baseSizeCounts = { s: 0, m: 0, l: 0, xl: 0 };
+                const designCountsByProduct = {
+                    musculosa: { ...baseDesignCounts },
+                    remera: { ...baseDesignCounts }
+                };
+                const colorCountsByProduct = {
+                    musculosa: { ...baseColorCounts },
+                    remera: { ...baseColorCounts }
+                };
+                const sizeCountsByProduct = {
+                    musculosa: { ...baseSizeCounts },
+                    remera: { ...baseSizeCounts }
+                };
                 const paymentMethodCounts = { transferencia: 0, efectivo: 0 };
                 const paymentMethodIncome = { transferencia: 0, efectivo: 0 };
                 const expenseByCategory = {
@@ -1348,24 +1367,28 @@
                         paymentMethodCounts[method]++;
                     }
                     
-                    // Analizar ventas de musculosas
-                    if (tx.category === 'online' && tx.musculosaDesign) {
-                        musculosasSold++;
+                    // Analizar ventas por tipo de prenda
+                    if (tx.category === 'online' && tx.productType && tx.musculosaDesign) {
+                        const type = tx.productType === 'remera' ? 'remera' : 'musculosa';
+                        soldByProduct[type]++;
                         
                         // Diseño
-                        if (designCounts.hasOwnProperty(tx.musculosaDesign)) {
+                        const designCounts = designCountsByProduct[type];
+                        if (designCounts && designCounts.hasOwnProperty(tx.musculosaDesign)) {
                             designCounts[tx.musculosaDesign]++;
-                        } else {
+                        } else if (designCounts) {
                             designCounts.otro++;
                         }
                         
                         // Color
-                        if (tx.musculosaColor && colorCounts.hasOwnProperty(tx.musculosaColor)) {
+                        const colorCounts = colorCountsByProduct[type];
+                        if (tx.musculosaColor && colorCounts && colorCounts.hasOwnProperty(tx.musculosaColor)) {
                             colorCounts[tx.musculosaColor]++;
                         }
                         
                         // Talle
-                        if (tx.musculosaSize) {
+                        const sizeCounts = sizeCountsByProduct[type];
+                        if (tx.musculosaSize && sizeCounts) {
                             const size = tx.musculosaSize.toLowerCase();
                             if (sizeCounts.hasOwnProperty(size)) {
                                 sizeCounts[size]++;
@@ -1377,8 +1400,8 @@
                 const balance = totalIncome - totalExpense;
                 
                 return { 
-                    totalIncome, totalExpense, balance, musculosasSold, 
-                    designCounts, colorCounts, sizeCounts,
+                    totalIncome, totalExpense, balance,
+                    soldByProduct, designCountsByProduct, colorCountsByProduct, sizeCountsByProduct,
                     paymentMethodCounts, paymentMethodIncome, expenseByCategory,
                     currentMonthIncome, currentMonthExpense,
                     previousMonthIncome, previousMonthExpense
@@ -1387,7 +1410,7 @@
             
             // Calcular datos para gráfico de torta
             const pieData = useMemo(() => {
-                const { designCounts } = analyticsData;
+                const designCounts = analyticsData.designCountsByProduct?.[analyticsProductType] || {};
                 const total = Object.values(designCounts).reduce((sum, val) => sum + val, 0);
                 if (total === 0) return [];
                 
@@ -1432,7 +1455,7 @@
                 });
                 
                 return slices;
-            }, [analyticsData]);
+            }, [analyticsData, analyticsProductType]);
             
             // Función para crear path de slice de torta
             const createPieSlice = (startAngle, endAngle, radius = 80) => {
@@ -1460,6 +1483,14 @@
                 };
                 const stockByColorAndSize = {};
                 const productTypesByColor = {}; // Nuevo: guardar tipos de prenda por color
+                const stockByColorByType = {
+                    musculosa: { ...stockByColor },
+                    remera: { ...stockByColor }
+                };
+                const stockByColorAndSizeByType = {
+                    musculosa: {},
+                    remera: {}
+                };
                 
                 stockItems.forEach(item => {
                     console.log('  📦 Procesando item:', item.name, 'Color:', item.category);
@@ -1491,6 +1522,19 @@
                         if (!productTypesByColor[item.category].includes(type)) {
                             productTypesByColor[item.category].push(type);
                         }
+                        
+                        // Guardar stock por color y talle por tipo de prenda
+                        const typeKey = isMusculosa ? 'musculosa' : isRemera ? 'remera' : null;
+                        if (typeKey && stockByColorByType[typeKey] && stockByColorByType[typeKey].hasOwnProperty(item.category)) {
+                            stockByColorByType[typeKey][item.category] += itemTotal;
+                            if (!stockByColorAndSizeByType[typeKey][item.category]) {
+                                stockByColorAndSizeByType[typeKey][item.category] = { s: 0, m: 0, l: 0, xl: 0 };
+                            }
+                            stockByColorAndSizeByType[typeKey][item.category].s += (item.stock?.s || 0);
+                            stockByColorAndSizeByType[typeKey][item.category].m += (item.stock?.m || 0);
+                            stockByColorAndSizeByType[typeKey][item.category].l += (item.stock?.l || 0);
+                            stockByColorAndSizeByType[typeKey][item.category].xl += (item.stock?.xl || 0);
+                        }
                     } else {
                         console.warn('  ⚠️ Color no reconocido o faltante:', item.category);
                     }
@@ -1498,7 +1542,15 @@
                 
                 console.log('📊 Resultado inventoryValue:', { totalUnits, stockByColor, productTypesByColor });
                 const totalValue = totalUnits * 35000;
-                return { totalUnits, totalValue, stockByColor, stockByColorAndSize, productTypesByColor };
+                return {
+                    totalUnits,
+                    totalValue,
+                    stockByColor,
+                    stockByColorAndSize,
+                    productTypesByColor,
+                    stockByColorByType,
+                    stockByColorAndSizeByType
+                };
             }, [stockItems]);
             
             return (
@@ -1543,15 +1595,43 @@
                             </div>
                         </section>
                         
-                        {/* Total de musculosas vendidas */}
+                        {/* Total de prendas vendidas */}
                         <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-text-main font-bold text-xl">Musculosas Vendidas</h3>
+                                    <h3 className="text-text-main font-bold text-xl">Prendas Vendidas</h3>
                                     <p className="text-text-muted text-sm mt-1">Total histórico</p>
                                 </div>
-                                <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10">
-                                    <span className="text-3xl font-bold text-primary">{analyticsData.musculosasSold}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mt-4">
+                                <div className="flex items-center justify-between rounded-2xl bg-primary/10 px-4 py-3">
+                                    <span className="text-sm font-semibold text-text-main">Musculosas</span>
+                                    <span className="text-2xl font-bold text-primary">{analyticsData.soldByProduct.musculosa}</span>
+                                </div>
+                                <div className="flex items-center justify-between rounded-2xl bg-primary/10 px-4 py-3">
+                                    <span className="text-sm font-semibold text-text-main">Remeras</span>
+                                    <span className="text-2xl font-bold text-primary">{analyticsData.soldByProduct.remera}</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Selector de producto para analytics */}
+                        <section className="bg-white rounded-2xl p-4 shadow-soft border border-pink-100">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-semibold text-text-main">Filtrar analíticas por prenda</p>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setAnalyticsProductType('musculosa')}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${analyticsProductType === 'musculosa' ? 'bg-primary text-white' : 'bg-pink-50 text-text-muted'}`}
+                                    >
+                                        Musculosas
+                                    </button>
+                                    <button
+                                        onClick={() => setAnalyticsProductType('remera')}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${analyticsProductType === 'remera' ? 'bg-primary text-white' : 'bg-pink-50 text-text-muted'}`}
+                                    >
+                                        Remeras
+                                    </button>
                                 </div>
                             </div>
                         </section>
@@ -1622,11 +1702,11 @@
                             <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
                                 <h3 className="text-text-main font-bold text-xl mb-6">Colores Más Vendidos</h3>
                                 <div className="space-y-4">
-                                    {Object.entries(analyticsData.colorCounts)
+                                    {Object.entries(analyticsData.colorCountsByProduct?.[analyticsProductType] || {})
                                         .filter(([_, count]) => count > 0)
                                         .sort((a, b) => b[1] - a[1])
                                         .map(([color, count]) => {
-                                            const maxCount = Math.max(...Object.values(analyticsData.colorCounts));
+                                            const maxCount = Math.max(...Object.values(analyticsData.colorCountsByProduct?.[analyticsProductType] || {}));
                                             const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
                                             const colorLabels = {
                                                 azul: 'Azul', blanco: 'Blanco', chocolate: 'Chocolate',
@@ -1660,7 +1740,7 @@
                             <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
                                 <h3 className="text-text-main font-bold text-lg mb-6">Talles Más Vendidos</h3>
                                 <div className="grid grid-cols-4 gap-3">
-                                    {Object.entries(analyticsData.sizeCounts).map(([size, count]) => (
+                                    {Object.entries(analyticsData.sizeCountsByProduct?.[analyticsProductType] || {}).map(([size, count]) => (
                                         <div key={size} className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 text-center border border-primary/20">
                                             <p className="text-2xl font-bold text-primary mb-1">{count}</p>
                                             <p className="text-xs font-medium text-text-muted uppercase">{size}</p>
@@ -1757,9 +1837,25 @@
                         
                         {/* Stock por color */}
                         <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
-                            <h3 className="text-text-main font-bold text-xl mb-5">Stock por Color</h3>
+                            <div className="flex items-center justify-between mb-5">
+                                <h3 className="text-text-main font-bold text-xl">Stock por Color</h3>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setStockProductType('musculosa')}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${stockProductType === 'musculosa' ? 'bg-primary text-white' : 'bg-pink-50 text-text-muted'}`}
+                                    >
+                                        Musculosas
+                                    </button>
+                                    <button
+                                        onClick={() => setStockProductType('remera')}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${stockProductType === 'remera' ? 'bg-primary text-white' : 'bg-pink-50 text-text-muted'}`}
+                                    >
+                                        Remeras
+                                    </button>
+                                </div>
+                            </div>
                             <div className="space-y-4">
-                                {Object.entries(inventoryValue.stockByColor)
+                                {Object.entries(inventoryValue.stockByColorByType?.[stockProductType] || {})
                                     .filter(([_, count]) => count > 0)
                                     .sort((a, b) => b[1] - a[1])
                                     .map(([color, count]) => {
@@ -1771,8 +1867,8 @@
                                             azul: '#3b82f6', blanco: '#f3f4f6', chocolate: '#7B3F00',
                                             gris_petroleo: '#374151', negro: '#000000', verde: '#22c55e'
                                         };
-                                        const sizes = inventoryValue.stockByColorAndSize[color] || { s: 0, m: 0, l: 0, xl: 0 };
-                                        const productTypes = inventoryValue.productTypesByColor?.[color] || [];
+                                        const sizes = inventoryValue.stockByColorAndSizeByType?.[stockProductType]?.[color] || { s: 0, m: 0, l: 0, xl: 0 };
+                                        const selectedTypeLabel = stockProductType === 'musculosa' ? 'Musculosa' : 'Remera';
                                         return (
                                             <div key={color} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                                                 <div className="flex items-center justify-between mb-3">
@@ -1780,13 +1876,11 @@
                                                         <div className={`w-6 h-6 rounded-full ${color === 'blanco' ? 'border-2 border-gray-300' : ''}`} style={{backgroundColor: colorCodes[color]}}></div>
                                                         <div className="flex flex-col">
                                                             <span className="font-bold text-text-main text-lg">{colorLabels[color]}</span>
-                                                            {productTypes.length > 0 && (
+                                                            {selectedTypeLabel && (
                                                                 <div className="flex gap-1.5 mt-1">
-                                                                    {productTypes.map(type => (
-                                                                        <span key={type} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
-                                                                            {type}
-                                                                        </span>
-                                                                    ))}
+                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                                                                        {selectedTypeLabel}
+                                                                    </span>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -1877,7 +1971,7 @@
                         {pieData.length === 0 && (
                             <section className="bg-white rounded-2xl p-12 shadow-soft border border-pink-100 text-center">
                                 <span className="material-symbols-outlined text-gray-300 !text-[64px] mb-4">bar_chart</span>
-                                <p className="text-text-muted font-medium">No hay ventas de musculosas registradas</p>
+                                <p className="text-text-muted font-medium">No hay ventas de {analyticsProductType === 'musculosa' ? 'musculosas' : 'remeras'} registradas</p>
                                 <p className="text-text-muted text-sm mt-2">Las estadísticas aparecerán cuando registres ventas online</p>
                             </section>
                         )}
