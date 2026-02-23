@@ -172,6 +172,7 @@
         const PAYMENT_METHODS = [
             { id: 'transferencia', name: 'Transferencia', icon: 'account_balance' },
             { id: 'efectivo', name: 'Efectivo', icon: 'payments' },
+            { id: 'tarjeta', name: 'Tarjeta', icon: 'credit_card' },
         ];
 
         const PRODUCT_TYPES = [
@@ -180,12 +181,15 @@
         ];
 
         const MUSCULOSA_DESIGNS = [
-            { id: 'pimiento', name: 'Pimiento' },
-            { id: 'medusa', name: 'Medusa' },
-            { id: 'concha_de_mar', name: 'Concha de mar' },
-            { id: 'saturno_rojo', name: 'Saturno rojo' },
-            { id: 'saturno_azul', name: 'Saturno azul' },
             { id: 'aceitunas', name: 'Aceitunas' },
+            { id: 'concha_de_mar', name: 'Concha de mar' },
+            { id: 'libelula', name: 'Libélula' },
+            { id: 'limon', name: 'Limón' },
+            { id: 'medusa', name: 'Medusa' },
+            { id: 'ojo_negro', name: 'Ojo negro' },
+            { id: 'pimiento', name: 'Pimiento' },
+            { id: 'saturno_azul', name: 'Saturno azul' },
+            { id: 'saturno_dorado', name: 'Saturno dorado' },
             { id: 'otro', name: 'Otro' },
         ];
 
@@ -219,6 +223,7 @@
             const [user, setUser] = useState(null);
             const [transactions, setTransactions] = useState([]);
             const [stockItems, setStockItems] = useState([]);
+            const [stockHistory, setStockHistory] = useState([]);
             const [showModal, setShowModal] = useState(false);
             const [activeTab, setActiveTab] = useState('dashboard');
             const [isLoading, setIsLoading] = useState(true);
@@ -227,6 +232,7 @@
             const [showTransactionModal, setShowTransactionModal] = useState(false);
             const [showStockModal, setShowStockModal] = useState(false);
             const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
+            const [showStockHistoryModal, setShowStockHistoryModal] = useState(false);
             const [editingTransaction, setEditingTransaction] = useState(null);
             const [editingStock, setEditingStock] = useState(null);
 
@@ -320,8 +326,15 @@
                     }
                     setIsLoading(false);
                 }, (e) => console.error("Error stock:", e));
+                
+                // Suscripción al historial de stock
+                const qHistory = query(collection(db, 'artifacts', appId, 'users', user.uid, 'stockHistory'), orderBy('createdAt', 'desc'));
+                const unsubHistory = onSnapshot(qHistory, (snapshot) => {
+                    const history = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setStockHistory(history);
+                }, (e) => console.error("Error history:", e));
 
-                return () => { unsubTx(); unsubStock(); };
+                return () => { unsubTx(); unsubStock(); unsubHistory(); };
             }, [user]);
 
             // --- CÁLCULOS FINANCIEROS ---
@@ -411,13 +424,9 @@
                         console.log('✅ Transacción creada');
                         
                         // Si es venta online, descontar del stock por color y talle
-                        if (txData.category === 'online' && txData.productType && txData.musculosaColor && txData.musculosaSize) {
+                        if (txData.category === 'online' && txData.products && txData.products.length > 0) {
                             try {
-                                console.log('🛒 Procesando descuento de stock:', {
-                                    tipo: txData.productType,
-                                    color: txData.musculosaColor,
-                                    talle: txData.musculosaSize
-                                });
+                                console.log('🛒 Procesando descuento de stock para', txData.products.length, 'productos');
                                 
                                 const stockRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock');
                                 const stockQuery = query(stockRef);
@@ -429,42 +438,72 @@
                                     }, reject);
                                 });
                                 
-                                // Determinar el tipo de prenda a buscar según el tipo
-                                const productName = txData.productType === 'musculosa' ? 'musculosa' : 'remera';
-                                
-                                // Buscar la prenda que coincida con el tipo y color
-                                const matchingItem = stockSnapshot.docs.find(docSnap => {
-                                    const data = docSnap.data();
-                                    const itemName = (data.name || '').toLowerCase();
-                                    const isMusculosa = itemName.includes('musculosa');
-                                    const isRemera = itemName.includes('remera');
-                                    const matchName = txData.productType === 'musculosa'
-                                        ? isMusculosa
-                                        : (txData.productType === 'remera' && isRemera && !isMusculosa);
-                                    const matchColor = data.category === txData.musculosaColor;
-                                    return matchName && matchColor;
-                                });
-                                
-                                if (matchingItem) {
-                                    const itemData = matchingItem.data();
-                                    const sizeKey = txData.musculosaSize.toLowerCase();
-                                    const currentStock = itemData.stock?.[sizeKey] || 0;
-                                    const newStock = Math.max(0, currentStock - 1);
+                                // Procesar cada producto vendido
+                                for (const product of txData.products) {
+                                    if (!product.productType || !product.musculosaColor || !product.musculosaSize) continue;
                                     
-                                    const itemDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'stock', matchingItem.id);
-                                    await updateDoc(itemDocRef, {
-                                        [`stock.${sizeKey}`]: newStock
+                                    console.log('🛒 Procesando:', {
+                                        tipo: product.productType,
+                                        color: product.musculosaColor,
+                                        talle: product.musculosaSize
                                     });
                                     
-                                    console.log(`✅ Stock actualizado:`, {
-                                        prenda: itemData.name,
-                                        color: txData.musculosaColor,
-                                        talle: txData.musculosaSize.toUpperCase(),
-                                        anterior: currentStock,
-                                        nuevo: newStock
+                                    // Determinar el tipo de prenda a buscar según el tipo
+                                    const productName = product.productType === 'musculosa' ? 'musculosa' : 'remera';
+                                    
+                                    // Buscar la prenda que coincida con el tipo y color
+                                    const matchingItem = stockSnapshot.docs.find(docSnap => {
+                                        const data = docSnap.data();
+                                        const itemName = (data.name || '').toLowerCase();
+                                        const isMusculosa = itemName.includes('musculosa');
+                                        const isRemera = itemName.includes('remera');
+                                        const matchName = product.productType === 'musculosa'
+                                            ? isMusculosa
+                                            : (product.productType === 'remera' && isRemera && !isMusculosa);
+                                        const matchColor = data.category === product.musculosaColor;
+                                        return matchName && matchColor;
                                     });
-                                } else {
-                                    console.warn('⚠️ No se encontró en stock:', productName, txData.musculosaColor);
+                                    
+                                    if (matchingItem) {
+                                        const itemData = matchingItem.data();
+                                        const sizeKey = product.musculosaSize.toLowerCase();
+                                        const currentStock = itemData.stock?.[sizeKey] || 0;
+                                        const newStock = Math.max(0, currentStock - 1);
+                                        
+                                        const itemDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'stock', matchingItem.id);
+                                        await updateDoc(itemDocRef, {
+                                            [`stock.${sizeKey}`]: newStock
+                                        });
+                                        
+                                        // Registrar en el historial
+                                        const historyRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stockHistory');
+                                        const designName = product.musculosaDesign === 'otro' 
+                                            ? product.musculosaCustomDesign 
+                                            : MUSCULOSA_DESIGNS.find(d => d.id === product.musculosaDesign)?.name;
+                                        await addDoc(historyRef, {
+                                            action: 'sale',
+                                            itemName: itemData.name,
+                                            itemColor: product.musculosaColor,
+                                            changes: [{
+                                                size: product.musculosaSize.toUpperCase(),
+                                                oldValue: currentStock,
+                                                newValue: newStock,
+                                                difference: -1
+                                            }],
+                                            description: `Venta online - ${designName}`,
+                                            createdAt: serverTimestamp()
+                                        });
+                                        
+                                        console.log(`✅ Stock actualizado:`, {
+                                            prenda: itemData.name,
+                                            color: product.musculosaColor,
+                                            talle: product.musculosaSize.toUpperCase(),
+                                            anterior: currentStock,
+                                            nuevo: newStock
+                                        });
+                                    } else {
+                                        console.warn('⚠️ No se encontró en stock:', productName, product.musculosaColor);
+                                    }
                                 }
                             } catch (stockError) {
                                 console.error('❌ Error al actualizar stock:', stockError);
@@ -504,18 +543,71 @@
 
             const handleSaveStock = async (itemData) => {
                 if (!user) return;
-                const { db, appId, collection, addDoc, updateDoc, doc, serverTimestamp } = window.firebaseData;
+                const { db, appId, collection, addDoc, updateDoc, doc, onSnapshot, query, serverTimestamp } = window.firebaseData;
                 const collectionRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock');
+                const historyRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stockHistory');
                 const cleanData = { ...itemData }; 
+                const historyDescription = itemData.historyDescription || '';
 
                 try {
                     if (editingStock) {
                         const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'stock', itemData.id);
-                        const { id, createdAt, ...dataToUpdate } = cleanData;
+                        const { id, createdAt, historyDescription, ...dataToUpdate } = cleanData;
+                        
+                        // Obtener datos anteriores para el historial
+                        const stockQuery = query(collectionRef);
+                        const stockSnapshot = await new Promise((resolve, reject) => {
+                            const unsubscribe = onSnapshot(stockQuery, (snapshot) => {
+                                unsubscribe();
+                                resolve(snapshot);
+                            }, reject);
+                        });
+                        
+                        const oldDoc = stockSnapshot.docs.find(d => d.id === itemData.id);
+                        const oldData = oldDoc?.data();
+                        
                         await updateDoc(docRef, dataToUpdate);
+                        
+                        // Registrar cambios en el historial
+                        if (oldData) {
+                            const changes = [];
+                            ['s', 'm', 'l', 'xl'].forEach(size => {
+                                const oldStock = oldData.stock?.[size] || 0;
+                                const newStock = itemData.stock?.[size] || 0;
+                                if (oldStock !== newStock) {
+                                    changes.push({
+                                        size: size.toUpperCase(),
+                                        oldValue: oldStock,
+                                        newValue: newStock,
+                                        difference: newStock - oldStock
+                                    });
+                                }
+                            });
+                            
+                            if (changes.length > 0) {
+                                await addDoc(historyRef, {
+                                    action: 'update',
+                                    itemName: itemData.name,
+                                    itemColor: itemData.category,
+                                    changes: changes,
+                                    description: historyDescription || 'Actualización manual de stock',
+                                    createdAt: serverTimestamp()
+                                });
+                            }
+                        }
                     } else {
-                        const { id, ...newItemData } = cleanData;
+                        const { id, historyDescription, ...newItemData } = cleanData;
                         await addDoc(collectionRef, { ...newItemData, createdAt: serverTimestamp() });
+                        
+                        // Registrar creación en el historial
+                        await addDoc(historyRef, {
+                            action: 'create',
+                            itemName: newItemData.name,
+                            itemColor: newItemData.category,
+                            stock: newItemData.stock,
+                            description: historyDescription || 'Producto creado',
+                            createdAt: serverTimestamp()
+                        });
                     }
                 } catch (e) { console.error(e); alert("Error al guardar stock."); }
                 setShowStockModal(false); setEditingStock(null);
@@ -523,8 +615,37 @@
 
             const handleDeleteStock = async (id) => {
                 if (!user) return;
-                const { db, appId, deleteDoc, doc } = window.firebaseData;
-                try { await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'stock', id)); } catch (e) { console.error(e); }
+                const { db, appId, deleteDoc, collection, addDoc, doc, onSnapshot, query, serverTimestamp } = window.firebaseData;
+                
+                try {
+                    // Obtener datos del item antes de eliminarlo
+                    const stockRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock');
+                    const stockQuery = query(stockRef);
+                    const stockSnapshot = await new Promise((resolve, reject) => {
+                        const unsubscribe = onSnapshot(stockQuery, (snapshot) => {
+                            unsubscribe();
+                            resolve(snapshot);
+                        }, reject);
+                    });
+                    
+                    const itemDoc = stockSnapshot.docs.find(d => d.id === id);
+                    const itemData = itemDoc?.data();
+                    
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'stock', id));
+                    
+                    // Registrar eliminación en el historial
+                    if (itemData) {
+                        const historyRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stockHistory');
+                        await addDoc(historyRef, {
+                            action: 'delete',
+                            itemName: itemData.name,
+                            itemColor: itemData.category,
+                            stock: itemData.stock,
+                            description: 'Producto eliminado',
+                            createdAt: serverTimestamp()
+                        });
+                    }
+                } catch (e) { console.error(e); }
                 setShowStockModal(false); setEditingStock(null);
             };
 
@@ -563,7 +684,7 @@
             return (
                 <div className="relative flex min-h-screen w-full flex-col overflow-hidden pb-24 bg-background-light">
                     {activeTab === 'stock' ? (
-                        <StockView items={stockItems} onItemClick={openEditStock} />
+                        <StockView items={stockItems} onItemClick={openEditStock} onOpenHistory={() => setShowStockHistoryModal(true)} />
                     ) : activeTab === 'movimientos' ? (
                         <TransactionsView transactions={transactions} totals={financialStats} onTransactionClick={openEditTransaction} />
                     ) : (
@@ -592,6 +713,10 @@
 
                     {showAnalyticsModal && (
                         <AnalyticsScreen onClose={() => setShowAnalyticsModal(false)} transactions={transactions} stockItems={stockItems} />
+                    )}
+                    
+                    {showStockHistoryModal && (
+                        <StockHistoryView onClose={() => setShowStockHistoryModal(false)} history={stockHistory} />
                     )}
                 </div>
             );
@@ -990,7 +1115,7 @@
         }
 
         // --- VISTA STOCK (RENOVADA v8.0) ---
-        function StockView({ items, onItemClick }) {
+        function StockView({ items, onItemClick, onOpenHistory }) {
             const scrollRef = useRef(null);
             const [search, setSearch] = useState('');
             const [activeCategory, setActiveCategory] = useState('all');
@@ -1027,10 +1152,15 @@
                             <span className="text-text-muted text-sm font-medium">Gestión de Inventario</span>
                             <h2 className="text-text-main text-2xl font-bold tracking-tight">Delfina Concept</h2>
                         </div>
-                        <button className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm border border-pink-100 text-text-main transition-transform active:scale-95">
-                            <span className="material-symbols-outlined !text-[24px]">notifications</span>
-                            <span className="absolute top-2.5 right-3 h-2 w-2 rounded-full bg-primary ring-2 ring-white"></span>
-                        </button>
+                        <div className="flex gap-2">
+                            <button onClick={onOpenHistory} className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm border border-pink-100 text-primary hover:bg-pink-50 transition-all active:scale-95">
+                                <span className="material-symbols-outlined !text-[24px]">history</span>
+                            </button>
+                            <button className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm border border-pink-100 text-text-main transition-transform active:scale-95">
+                                <span className="material-symbols-outlined !text-[24px]">notifications</span>
+                                <span className="absolute top-2.5 right-3 h-2 w-2 rounded-full bg-primary ring-2 ring-white"></span>
+                            </button>
+                        </div>
                     </header>
 
                     <main ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-2 space-y-6 hide-scrollbar">
@@ -1157,11 +1287,139 @@
             );
         }
 
+        // --- PANTALLA: HISTORIAL DE STOCK ---
+        function StockHistoryView({ onClose, history }) {
+            const formatDate = (timestamp) => {
+                if (!timestamp) return 'Fecha desconocida';
+                const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+                return date.toLocaleDateString('es-AR', { 
+                    day: '2-digit', 
+                    month: 'short', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            };
+            
+            const getActionIcon = (action) => {
+                switch(action) {
+                    case 'create': return 'add_circle';
+                    case 'update': return 'edit';
+                    case 'delete': return 'delete';
+                    case 'sale': return 'shopping_cart';
+                    default: return 'info';
+                }
+            };
+            
+            const getActionColor = (action) => {
+                switch(action) {
+                    case 'create': return 'text-green-600 bg-green-50';
+                    case 'update': return 'text-blue-600 bg-blue-50';
+                    case 'delete': return 'text-red-600 bg-red-50';
+                    case 'sale': return 'text-primary bg-pink-50';
+                    default: return 'text-gray-600 bg-gray-50';
+                }
+            };
+            
+            const getActionLabel = (action) => {
+                switch(action) {
+                    case 'create': return 'Creación';
+                    case 'update': return 'Actualización';
+                    case 'delete': return 'Eliminación';
+                    case 'sale': return 'Venta';
+                    default: return 'Movimiento';
+                }
+            };
+            
+            const colorNames = {
+                azul: 'Azul', blanco: 'Blanco', chocolate: 'Chocolate',
+                gris_petroleo: 'Gris Petróleo', negro: 'Negro', verde: 'Verde'
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 bg-background-light flex flex-col animate-slide-up">
+                    <header className="flex items-center justify-between px-6 pt-8 pb-4 bg-background-light/95 backdrop-blur-md sticky top-0 z-20">
+                        <button onClick={onClose} className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-pink-50 text-text-main transition-colors">
+                            <span className="material-symbols-outlined">arrow_back</span>
+                        </button>
+                        <h2 className="text-text-main text-lg font-bold tracking-tight">Historial de Stock</h2>
+                        <button className="w-10 h-10 opacity-0 pointer-events-none"></button>
+                    </header>
+                    
+                    <main className="flex-1 overflow-y-auto px-6 py-2 space-y-4 pb-32">
+                        {history.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-center">
+                                <span className="material-symbols-outlined text-6xl text-gray-300 mb-4">history</span>
+                                <p className="text-text-muted text-sm">No hay movimientos registrados aún</p>
+                            </div>
+                        ) : (
+                            history.map((entry, index) => (
+                                <div key={entry.id || index} className="bg-white rounded-2xl shadow-soft p-4 border border-pink-50">
+                                    <div className="flex items-start gap-3">
+                                        <div className={`flex items-center justify-center w-10 h-10 rounded-full ${getActionColor(entry.action)}`}>
+                                            <span className="material-symbols-outlined !text-[20px]">{getActionIcon(entry.action)}</span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${getActionColor(entry.action)}`}>
+                                                    {getActionLabel(entry.action)}
+                                                </span>
+                                                <span className="text-xs text-text-muted">{formatDate(entry.createdAt)}</span>
+                                            </div>
+                                            
+                                            <h4 className="text-text-main font-bold text-sm">{entry.itemName}</h4>
+                                            <p className="text-text-muted text-xs">
+                                                {colorNames[entry.itemColor] || entry.itemColor}
+                                            </p>
+                                            
+                                            {entry.changes && entry.changes.length > 0 && (
+                                                <div className="mt-2 space-y-1">
+                                                    {entry.changes.map((change, idx) => (
+                                                        <div key={idx} className="flex items-center gap-2 text-xs">
+                                                            <span className="font-medium text-text-main">Talle {change.size}:</span>
+                                                            <span className="text-text-muted">{change.oldValue}</span>
+                                                            <span className="material-symbols-outlined !text-[14px] text-primary">arrow_forward</span>
+                                                            <span className={`font-bold ${change.difference > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                {change.newValue}
+                                                            </span>
+                                                            <span className={`text-xs ${change.difference > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                ({change.difference > 0 ? '+' : ''}{change.difference})
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            
+                                            {entry.stock && !entry.changes && (
+                                                <div className="mt-2 flex gap-2 text-xs text-text-muted">
+                                                    <span>S: {entry.stock.s || 0}</span>
+                                                    <span>M: {entry.stock.m || 0}</span>
+                                                    <span>L: {entry.stock.l || 0}</span>
+                                                    <span>XL: {entry.stock.xl || 0}</span>
+                                                </div>
+                                            )}
+                                            
+                                            {entry.description && (
+                                                <p className="mt-2 text-xs text-text-muted italic bg-pink-50/50 rounded-lg px-2 py-1">
+                                                    "{entry.description}"
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </main>
+                </div>
+            );
+        }
+
         // --- PANTALLA: AÑADIR/EDITAR STOCK (RENOVADA v8.0) ---
         function AddStockScreen({ onClose, onSave, onDelete, initialData }) {
             const [name, setName] = useState(initialData?.name || '');
             const [collection, setCollection] = useState(initialData?.collection || '');
             const [category, setCategory] = useState(initialData?.category || '');
+            const [historyDescription, setHistoryDescription] = useState('');
             
             // Estados individuales para talles
             const [stockS, setStockS] = useState(initialData?.stock?.s || '');
@@ -1186,7 +1444,8 @@
                         m: parseInt(stockM) || 0,
                         l: parseInt(stockL) || 0,
                         xl: parseInt(stockXL) || 0
-                    }
+                    },
+                    historyDescription: historyDescription
                 };
                 onSave(newItem);
             };
@@ -1260,6 +1519,21 @@
                                 </div>
                             </div>
                             
+                            {/* Descripción para el historial (opcional) */}
+                            <div className="bg-pink-50/50 rounded-2xl shadow-sm p-6 space-y-3 border border-pink-100">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-primary !text-[20px]">history</span>
+                                    <label className="text-sm font-medium text-text-main">Nota para el Historial (Opcional)</label>
+                                </div>
+                                <input 
+                                    value={historyDescription} 
+                                    onChange={e => setHistoryDescription(e.target.value)} 
+                                    className="block w-full px-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary focus:border-primary sm:text-sm placeholder-gray-400" 
+                                    placeholder="Ej: Reposición de stock, corrección de inventario, etc." 
+                                />
+                                <p className="text-xs text-text-muted">Esta nota se guardará en el historial para recordar el motivo del cambio</p>
+                            </div>
+                            
                             <div className="flex flex-col gap-3">
                                 <button type="submit" className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-pink-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg">
                                     <span>{isEditing ? 'Guardar Cambios' : 'Crear Producto'}</span>
@@ -1291,8 +1565,9 @@
                 
                 // Contadores para análisis
                 const baseDesignCounts = {
-                    pimiento: 0, medusa: 0, concha_de_mar: 0,
-                    saturno_rojo: 0, saturno_azul: 0, aceitunas: 0, otro: 0
+                    aceitunas: 0, concha_de_mar: 0, libelula: 0, limon: 0,
+                    medusa: 0, ojo_negro: 0, pimiento: 0, saturno_azul: 0,
+                    saturno_dorado: 0, otro: 0
                 };
                 const baseColorCounts = {
                     azul: 0, blanco: 0, chocolate: 0,
@@ -1311,8 +1586,8 @@
                     musculosa: { ...baseSizeCounts },
                     remera: { ...baseSizeCounts }
                 };
-                const paymentMethodCounts = { transferencia: 0, efectivo: 0 };
-                const paymentMethodIncome = { transferencia: 0, efectivo: 0 };
+                const paymentMethodCounts = { transferencia: 0, efectivo: 0, tarjeta: 0 };
+                const paymentMethodIncome = { transferencia: 0, efectivo: 0, tarjeta: 0 };
                 const expenseByCategory = {
                     musculosas: 0, remeras: 0, merceria: 0, logistica: 0, marketing: 0
                 };
@@ -1368,32 +1643,44 @@
                     }
                     
                     // Analizar ventas por tipo de prenda
-                    if (tx.category === 'online' && tx.productType && tx.musculosaDesign) {
-                        const type = tx.productType === 'remera' ? 'remera' : 'musculosa';
-                        soldByProduct[type]++;
+                    if (tx.category === 'online') {
+                        // Soportar tanto el nuevo formato (products array) como el antiguo (campos individuales)
+                        const productsArray = tx.products || (tx.productType ? [{
+                            productType: tx.productType,
+                            musculosaDesign: tx.musculosaDesign,
+                            musculosaColor: tx.musculosaColor,
+                            musculosaSize: tx.musculosaSize
+                        }] : []);
                         
-                        // Diseño
-                        const designCounts = designCountsByProduct[type];
-                        if (designCounts && designCounts.hasOwnProperty(tx.musculosaDesign)) {
-                            designCounts[tx.musculosaDesign]++;
-                        } else if (designCounts) {
-                            designCounts.otro++;
-                        }
-                        
-                        // Color
-                        const colorCounts = colorCountsByProduct[type];
-                        if (tx.musculosaColor && colorCounts && colorCounts.hasOwnProperty(tx.musculosaColor)) {
-                            colorCounts[tx.musculosaColor]++;
-                        }
-                        
-                        // Talle
-                        const sizeCounts = sizeCountsByProduct[type];
-                        if (tx.musculosaSize && sizeCounts) {
-                            const size = tx.musculosaSize.toLowerCase();
-                            if (sizeCounts.hasOwnProperty(size)) {
-                                sizeCounts[size]++;
+                        productsArray.forEach(product => {
+                            if (!product.productType || !product.musculosaDesign) return;
+                            
+                            const type = product.productType === 'remera' ? 'remera' : 'musculosa';
+                            soldByProduct[type]++;
+                            
+                            // Diseño
+                            const designCounts = designCountsByProduct[type];
+                            if (designCounts && designCounts.hasOwnProperty(product.musculosaDesign)) {
+                                designCounts[product.musculosaDesign]++;
+                            } else if (designCounts) {
+                                designCounts.otro++;
                             }
-                        }
+                            
+                            // Color
+                            const colorCounts = colorCountsByProduct[type];
+                            if (product.musculosaColor && colorCounts && colorCounts.hasOwnProperty(product.musculosaColor)) {
+                                colorCounts[product.musculosaColor]++;
+                            }
+                            
+                            // Talle
+                            const sizeCounts = sizeCountsByProduct[type];
+                            if (product.musculosaSize && sizeCounts) {
+                                const size = product.musculosaSize.toLowerCase();
+                                if (sizeCounts.hasOwnProperty(size)) {
+                                    sizeCounts[size]++;
+                                }
+                            }
+                        });
                     }
                 });
                 
@@ -1415,22 +1702,28 @@
                 if (total === 0) return [];
                 
                 const colors = {
-                    pimiento: '#ef4444',
-                    medusa: '#8b5cf6',
-                    concha_de_mar: '#06b6d4',
-                    saturno_rojo: '#dc2626',
-                    saturno_azul: '#3b82f6',
                     aceitunas: '#22c55e',
+                    concha_de_mar: '#06b6d4',
+                    libelula: '#f97316',
+                    limon: '#eab308',
+                    medusa: '#8b5cf6',
+                    ojo_negro: '#1f2937',
+                    pimiento: '#ef4444',
+                    saturno_azul: '#3b82f6',
+                    saturno_dorado: '#fbbf24',
                     otro: '#64748b'
                 };
                 
                 const labels = {
-                    pimiento: 'Pimiento',
-                    medusa: 'Medusa',
-                    concha_de_mar: 'Concha de mar',
-                    saturno_rojo: 'Saturno Rojo',
-                    saturno_azul: 'Saturno Azul',
                     aceitunas: 'Aceitunas',
+                    concha_de_mar: 'Concha de mar',
+                    libelula: 'Libélula',
+                    limon: 'Limón',
+                    medusa: 'Medusa',
+                    ojo_negro: 'Ojo negro',
+                    pimiento: 'Pimiento',
+                    saturno_azul: 'Saturno Azul',
+                    saturno_dorado: 'Saturno Dorado',
                     otro: 'Otro'
                 };
                 
@@ -1786,6 +2079,22 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="bg-purple-500 rounded-full p-2 shrink-0">
+                                                <span className="material-symbols-outlined text-white !text-[24px]">credit_card</span>
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-semibold text-purple-600">Tarjeta</p>
+                                                <p className="text-xs text-purple-500 mt-1 whitespace-nowrap">{analyticsData.paymentMethodCounts.tarjeta || 0} transacciones</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right shrink-0 ml-2">
+                                            <p className="text-lg font-bold text-purple-700 whitespace-nowrap">${(analyticsData.paymentMethodIncome.tarjeta || 0).toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </section>
                         
@@ -2019,11 +2328,46 @@
             const [date, setDate] = useState(initialData?.fullDate || getLocalDateISO());
             
             // Estados para venta online
-            const [productType, setProductType] = useState(initialData?.productType || '');
-            const [musculosaDesign, setMusculosaDesign] = useState(initialData?.musculosaDesign || '');
-            const [musculosaCustomDesign, setMusculosaCustomDesign] = useState(initialData?.musculosaCustomDesign || '');
-            const [musculosaColor, setMusculosaColor] = useState(initialData?.musculosaColor || '');
-            const [musculosaSize, setMusculosaSize] = useState(initialData?.musculosaSize || '');
+            const [quantity, setQuantity] = useState(initialData?.quantity || 1);
+            const [products, setProducts] = useState(
+                initialData?.products || [{ 
+                    productType: '', 
+                    musculosaDesign: '', 
+                    musculosaCustomDesign: '', 
+                    musculosaColor: '', 
+                    musculosaSize: '' 
+                }]
+            );
+            
+            // Actualizar cantidad de productos cuando cambia quantity
+            useEffect(() => {
+                if (category === 'online' && quantity && Number.isInteger(quantity)) {
+                    const newProducts = [...products];
+                    if (quantity > products.length) {
+                        // Agregar más productos
+                        for (let i = products.length; i < quantity; i++) {
+                            newProducts.push({ 
+                                productType: '', 
+                                musculosaDesign: '', 
+                                musculosaCustomDesign: '', 
+                                musculosaColor: '', 
+                                musculosaSize: '' 
+                            });
+                        }
+                    } else if (quantity < products.length) {
+                        // Remover productos
+                        newProducts.splice(quantity);
+                    }
+                    setProducts(newProducts);
+                }
+            }, [quantity, category]);
+            
+            // Función para actualizar un producto específico
+            const updateProduct = (index, field, value) => {
+                const newProducts = [...products];
+                newProducts[index] = { ...newProducts[index], [field]: value };
+                setProducts(newProducts);
+            };
             
             const handleSubmit = (e) => {
                 e.preventDefault();
@@ -2031,17 +2375,26 @@
                 
                 // Validar campos de venta online
                 if (category === 'online') {
-                    if (!productType) {
-                        alert('Por favor selecciona el tipo de prenda (Musculosa o Remera)');
+                    if (!quantity || quantity < 1 || !Number.isInteger(quantity)) {
+                        alert('Por favor ingresa una cantidad válida (mínimo 1)');
                         return;
                     }
-                    if (!musculosaDesign || !musculosaColor || !musculosaSize) {
-                        alert('Por favor completa todos los campos de la prenda (Diseño, Color y Talle)');
-                        return;
-                    }
-                    if (musculosaDesign === 'otro' && !musculosaCustomDesign) {
-                        alert('Por favor especifica el diseño personalizado');
-                        return;
+                    
+                    // Validar cada producto
+                    for (let i = 0; i < quantity; i++) {
+                        const product = products[i];
+                        if (!product.productType) {
+                            alert(`Por favor selecciona el tipo de prenda para el artículo ${i + 1}`);
+                            return;
+                        }
+                        if (!product.musculosaDesign || !product.musculosaColor || !product.musculosaSize) {
+                            alert(`Por favor completa todos los campos para el artículo ${i + 1} (Diseño, Color y Talle)`);
+                            return;
+                        }
+                        if (product.musculosaDesign === 'otro' && !product.musculosaCustomDesign) {
+                            alert(`Por favor especifica el diseño personalizado para el artículo ${i + 1}`);
+                            return;
+                        }
                     }
                 }
                 
@@ -2049,13 +2402,19 @@
                 
                 // Construir título automático para venta online
                 let finalTitle = desc || 'Movimiento';
-                if (category === 'online' && productType && musculosaColor && musculosaSize && musculosaDesign) {
-                    const colorName = MUSCULOSA_COLORS.find(c => c.id === musculosaColor)?.name || musculosaColor;
-                    const sizeName = musculosaSize.toUpperCase();
-                    const designName = musculosaDesign === 'otro' ? musculosaCustomDesign : MUSCULOSA_DESIGNS.find(d => d.id === musculosaDesign)?.name;
-                    const productName = PRODUCT_TYPES.find(p => p.id === productType)?.name || productType;
-                    finalTitle = `${productName} ${colorName} talle ${sizeName} - ${designName}`;
-                    if (desc) finalTitle += ` (${desc})`;
+                if (category === 'online' && quantity > 0) {
+                    if (quantity === 1) {
+                        const product = products[0];
+                        const colorName = MUSCULOSA_COLORS.find(c => c.id === product.musculosaColor)?.name || product.musculosaColor;
+                        const sizeName = product.musculosaSize.toUpperCase();
+                        const designName = product.musculosaDesign === 'otro' ? product.musculosaCustomDesign : MUSCULOSA_DESIGNS.find(d => d.id === product.musculosaDesign)?.name;
+                        const productName = PRODUCT_TYPES.find(p => p.id === product.productType)?.name || product.productType;
+                        finalTitle = `${productName} ${colorName} talle ${sizeName} - ${designName}`;
+                        if (desc) finalTitle += ` (${desc})`;
+                    } else {
+                        finalTitle = `Venta de ${quantity} prendas`;
+                        if (desc) finalTitle += ` - ${desc}`;
+                    }
                 }
                 
                 const newTx = { 
@@ -2071,12 +2430,11 @@
                     paymentMethod: paymentMethod || 'transferencia'
                 };
                 
-                // Solo agregar campos de prenda si tienen valor
-                if (productType) newTx.productType = productType;
-                if (musculosaDesign) newTx.musculosaDesign = musculosaDesign;
-                if (musculosaCustomDesign) newTx.musculosaCustomDesign = musculosaCustomDesign;
-                if (musculosaColor) newTx.musculosaColor = musculosaColor;
-                if (musculosaSize) newTx.musculosaSize = musculosaSize;
+                // Agregar información de productos para venta online
+                if (category === 'online') {
+                    newTx.quantity = quantity;
+                    newTx.products = products.slice(0, quantity);
+                }
                 
                 onSave(newTx);
             };
@@ -2110,51 +2468,104 @@
                                 {category === 'online' && (
                                     <>
                                         <div className="space-y-1.5">
-                                            <label className="text-sm font-medium text-text-main ml-1">Tipo de Prenda <span className="text-primary">*</span></label>
-                                            <select value={productType} onChange={(e) => setProductType(e.target.value)} className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary focus:border-primary sm:text-sm">
-                                                <option value="">Seleccionar tipo...</option>
-                                                {PRODUCT_TYPES.map((type) => (
-                                                    <option key={type.id} value={type.id}>{type.name}</option>
-                                                ))}
-                                            </select>
+                                            <label className="text-sm font-medium text-text-main ml-1">Cantidad de Prendas <span className="text-primary">*</span></label>
+                                            <input 
+                                                type="number" 
+                                                min="1" 
+                                                value={quantity} 
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val === '') {
+                                                        setQuantity('');
+                                                    } else {
+                                                        const num = parseInt(val);
+                                                        if (!isNaN(num) && num >= 1) {
+                                                            setQuantity(num);
+                                                        }
+                                                    }
+                                                }} 
+                                                className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary sm:text-sm" 
+                                                placeholder="Ej: 2" 
+                                            />
+                                            <p className="text-xs text-text-muted ml-1">Si vendes más de una prenda, completa los datos de cada una</p>
                                         </div>
                                         
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-medium text-text-main ml-1">Diseño <span className="text-primary">*</span></label>
-                                            <select value={musculosaDesign} onChange={(e) => setMusculosaDesign(e.target.value)} className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary focus:border-primary sm:text-sm">
-                                                <option value="">Seleccionar diseño...</option>
-                                                {MUSCULOSA_DESIGNS.map((design) => (
-                                                    <option key={design.id} value={design.id}>{design.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
+                                        <div className="h-px bg-gradient-to-r from-transparent via-pink-200 to-transparent my-2"></div>
                                         
-                                        {musculosaDesign === 'otro' && (
-                                            <div className="space-y-1.5">
-                                                <label className="text-sm font-medium text-text-main ml-1">Especificar diseño <span className="text-primary">*</span></label>
-                                                <input type="text" value={musculosaCustomDesign} onChange={(e) => setMusculosaCustomDesign(e.target.value)} className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary sm:text-sm" placeholder="Ej: Pato, Estrella..." />
-                                            </div>
-                                        )}
-                                        
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-medium text-text-main ml-1">Color <span className="text-primary">*</span></label>
-                                            <select value={musculosaColor} onChange={(e) => setMusculosaColor(e.target.value)} className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary focus:border-primary sm:text-sm">
-                                                <option value="">Seleccionar color...</option>
-                                                {MUSCULOSA_COLORS.map((color) => (
-                                                    <option key={color.id} value={color.id}>{color.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-medium text-text-main ml-1">Talle <span className="text-primary">*</span></label>
-                                            <select value={musculosaSize} onChange={(e) => setMusculosaSize(e.target.value)} className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary focus:border-primary sm:text-sm">
-                                                <option value="">Seleccionar talle...</option>
-                                                {MUSCULOSA_SIZES.map((size) => (
-                                                    <option key={size.id} value={size.id}>{size.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
+                                        {/* Renderizar campos para cada producto */}
+                                        {quantity && Number.isInteger(quantity) && quantity > 0 && Array.from({ length: quantity }).map((_, index) => {
+                                            const product = products[index] || {};
+                                            return (
+                                                <div key={index} className="space-y-4 p-4 bg-pink-50/50 rounded-xl border border-pink-100">
+                                                    <h3 className="text-sm font-bold text-primary">Prenda {index + 1}</h3>
+                                                    
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-sm font-medium text-text-main ml-1">Tipo de Prenda <span className="text-primary">*</span></label>
+                                                        <select 
+                                                            value={product.productType || ''} 
+                                                            onChange={(e) => updateProduct(index, 'productType', e.target.value)} 
+                                                            className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary focus:border-primary sm:text-sm">
+                                                            <option value="">Seleccionar tipo...</option>
+                                                            {PRODUCT_TYPES.map((type) => (
+                                                                <option key={type.id} value={type.id}>{type.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-sm font-medium text-text-main ml-1">Diseño <span className="text-primary">*</span></label>
+                                                        <select 
+                                                            value={product.musculosaDesign || ''} 
+                                                            onChange={(e) => updateProduct(index, 'musculosaDesign', e.target.value)} 
+                                                            className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary focus:border-primary sm:text-sm">
+                                                            <option value="">Seleccionar diseño...</option>
+                                                            {MUSCULOSA_DESIGNS.map((design) => (
+                                                                <option key={design.id} value={design.id}>{design.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    {product.musculosaDesign === 'otro' && (
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-sm font-medium text-text-main ml-1">Especificar diseño <span className="text-primary">*</span></label>
+                                                            <input 
+                                                                type="text" 
+                                                                value={product.musculosaCustomDesign || ''} 
+                                                                onChange={(e) => updateProduct(index, 'musculosaCustomDesign', e.target.value)} 
+                                                                className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary sm:text-sm" 
+                                                                placeholder="Ej: Pato, Estrella..." 
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-sm font-medium text-text-main ml-1">Color <span className="text-primary">*</span></label>
+                                                        <select 
+                                                            value={product.musculosaColor || ''} 
+                                                            onChange={(e) => updateProduct(index, 'musculosaColor', e.target.value)} 
+                                                            className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary focus:border-primary sm:text-sm">
+                                                            <option value="">Seleccionar color...</option>
+                                                            {MUSCULOSA_COLORS.map((color) => (
+                                                                <option key={color.id} value={color.id}>{color.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-sm font-medium text-text-main ml-1">Talle <span className="text-primary">*</span></label>
+                                                        <select 
+                                                            value={product.musculosaSize || ''} 
+                                                            onChange={(e) => updateProduct(index, 'musculosaSize', e.target.value)} 
+                                                            className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary focus:border-primary sm:text-sm">
+                                                            <option value="">Seleccionar talle...</option>
+                                                            {MUSCULOSA_SIZES.map((size) => (
+                                                                <option key={size.id} value={size.id}>{size.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                         
                                         <div className="h-px bg-gradient-to-r from-transparent via-pink-200 to-transparent my-2"></div>
                                     </>
