@@ -983,8 +983,13 @@
                     }
 
                     return dateMatch && catMatch && typeMatch && paymentMatch;
+                }).sort((a, b) => {
+                    // Ordenar por fecha: más reciente primero
+                    const dateA = a.fullDate || "2023-01-01";
+                    const dateB = b.fullDate || "2023-01-01";
+                    return dateB.localeCompare(dateA);
                 });
-            }, [transactions, filterDate, filterCategory, filterType, customRange]);
+            }, [transactions, filterDate, filterCategory, filterType, customRange, filterPaymentMethod]);
 
             const grouped = filteredTransactions.reduce((acc, tx) => {
                 const [y, m, d] = (tx.fullDate || "").split('-');
