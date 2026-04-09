@@ -1,31 +1,34 @@
 <!DOCTYPE html>
 <html class="light" lang="es">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
     <title>Delfina Concept Finance</title>
-    
+
     <!-- Iconos y PWA -->
-    <link rel="icon" type="image/png" href="logo-delfina.png"/>
-    <link rel="apple-touch-icon" href="logo-delfina.png"/>
-    <link rel="manifest" href="manifest.json"/>
-    <meta name="apple-mobile-web-app-capable" content="yes"/>
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-    <meta name="apple-mobile-web-app-title" content="Delfina Concept"/>
-    <meta name="theme-color" content="#f4258c"/>
-    
+    <link rel="icon" type="image/png" href="logo-delfina.png" />
+    <link rel="apple-touch-icon" href="logo-delfina.png" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Delfina Concept" />
+    <meta name="theme-color" content="#f4258c" />
+
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
+
     <!-- Tailwind Config -->
     <script>
         window.tailwind = window.tailwind || {};
@@ -57,6 +60,15 @@
                         'soft': '0 4px 20px -2px rgba(244, 37, 140, 0.1)',
                         'glow': '0 8px 32px -4px rgba(244, 37, 140, 0.35)',
                         'modal': '0 -10px 40px -10px rgba(0,0,0,0.1)'
+                    },
+                    keyframes: {
+                        'fade-in-up': {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fade-in-up 0.7s ease-out forwards',
                     }
                 },
             },
@@ -100,44 +112,91 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
+
         // Identificador de la app (en producción usamos un ID fijo para Delfina Concept)
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'delfina-concept-prod';
 
         // Exponer herramientas globalmente para React
-        window.firebaseData = { 
-            auth, 
-            db, 
-            appId, 
-            collection, 
-            addDoc, 
-            updateDoc, 
-            deleteDoc, 
-            doc, 
-            onSnapshot, 
-            query, 
-            orderBy, 
+        window.firebaseData = {
+            auth,
+            db,
+            appId,
+            collection,
+            addDoc,
+            updateDoc,
+            deleteDoc,
+            doc,
+            onSnapshot,
+            query,
+            orderBy,
             serverTimestamp,
             writeBatch,
-            signInAnonymously, 
-            signInWithCustomToken, 
-            onAuthStateChanged 
+            signInAnonymously,
+            signInWithCustomToken,
+            onAuthStateChanged
         };
     </script>
 
     <style>
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .filled-icon { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-        body { -webkit-tap-highlight-color: transparent; }
-        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .filled-icon {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
     </style>
 </head>
+
 <body class="bg-background-light text-text-main font-display selection:bg-pink-200">
     <div id="root"></div>
 
@@ -212,7 +271,7 @@
         const STOCK_CATEGORIES = [
             { id: 'azul', name: 'Azul', colorCode: 'bg-blue-500' },
             { id: 'blanco', name: 'Blanco', colorCode: 'bg-white border border-gray-200' },
-            { id: 'chocolate', name: 'Chocolate', colorCode: 'bg-[#7B3F00]' }, 
+            { id: 'chocolate', name: 'Chocolate', colorCode: 'bg-[#7B3F00]' },
             { id: 'gris_petroleo', name: 'Gris Petróleo', colorCode: 'bg-gray-700' },
             { id: 'negro', name: 'Negro', colorCode: 'bg-black' },
             { id: 'verde', name: 'Verde', colorCode: 'bg-green-600' },
@@ -263,12 +322,12 @@
                             } catch (error) {
                                 console.error("❌ Error en auth:", error.code, error.message);
                                 // Fallback a anónimo si falla el token custom (común en despliegue manual)
-                                try { 
+                                try {
                                     console.log('🔄 Reintentando con auth anónimo...');
-                                    const result = await signInAnonymously(auth); 
+                                    const result = await signInAnonymously(auth);
                                     console.log('✅ Fallback exitoso:', result.user.uid);
-                                } catch(e) { 
-                                    console.error("❌ Auth anónimo falló:", e.code, e.message); 
+                                } catch (e) {
+                                    console.error("❌ Auth anónimo falló:", e.code, e.message);
                                     alert('Error de autenticación: ' + e.message + '. Verifica tu conexión a internet y recarga la página.');
                                 }
                             }
@@ -312,7 +371,7 @@
                 const qStock = query(collection(db, 'artifacts', appId, 'users', user.uid, 'stock'), orderBy('name', 'asc'));
                 const unsubStock = onSnapshot(qStock, async (snapshot) => {
                     const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    
+
                     if (items.length === 0 && !hasSeededRef.current) {
                         hasSeededRef.current = true;
                         // Solo hacer seed si estamos seguros de que es la primera vez real y no un error de carga
@@ -322,20 +381,20 @@
                             await addDoc(collectionRef, { ...item, createdAt: serverTimestamp() });
                         }
                         */
-                       setStockItems([]); // Inicia vacío en producción para no ensuciar
+                        setStockItems([]); // Inicia vacío en producción para no ensuciar
                     } else {
                         setStockItems(items);
                     }
                     setIsLoading(false);
                 }, (e) => console.error("Error stock:", e));
-                
+
                 // Suscripción al historial de stock
                 const qHistory = query(collection(db, 'artifacts', appId, 'users', user.uid, 'stockHistory'), orderBy('createdAt', 'desc'));
                 const unsubHistory = onSnapshot(qHistory, (snapshot) => {
                     const history = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     setStockHistory(history);
                 }, (e) => console.error("Error history:", e));
-                
+
                 // Suscripción a tareas de producción
                 const qTasks = query(collection(db, 'artifacts', appId, 'users', user.uid, 'productionTasks'), orderBy('createdAt', 'desc'));
                 const unsubTasks = onSnapshot(qTasks, (snapshot) => {
@@ -361,7 +420,7 @@
                 transactions.forEach(tx => {
                     const dateStr = tx.fullDate ? tx.fullDate : getLocalDateISO();
                     const [year, month, day] = dateStr.split('-').map(Number);
-                    const txDate = new Date(year, month - 1, day); 
+                    const txDate = new Date(year, month - 1, day);
                     const txMonthKey = getMonthKey(txDate);
                     const amount = parseFloat(tx.amount) || 0;
 
@@ -410,7 +469,7 @@
                 }
                 const { db, appId, collection, addDoc, updateDoc, doc, serverTimestamp, query, onSnapshot, where } = window.firebaseData;
                 const collectionRef = collection(db, 'artifacts', appId, 'users', user.uid, 'transactions');
-                
+
                 // Limpiar campos undefined
                 const cleanData = { ...txData, amount: parseFloat(txData.amount) };
                 Object.keys(cleanData).forEach(key => {
@@ -423,31 +482,31 @@
                     if (editingTransaction) {
                         console.log('📝 Editando transacción:', txData.id);
                         const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', txData.id);
-                        const { id, createdAt, ...dataToUpdate } = cleanData; 
+                        const { id, createdAt, ...dataToUpdate } = cleanData;
                         await updateDoc(docRef, dataToUpdate);
                         console.log('✅ Transacción actualizada');
                     } else {
                         console.log('➕ Creando nueva transacción');
-                        const { id, ...newTxData } = cleanData; 
+                        const { id, ...newTxData } = cleanData;
                         await addDoc(collectionRef, { ...newTxData, createdAt: serverTimestamp() });
                         console.log('✅ Transacción creada');
-                        
+
                         // Si es venta online, descontar del stock y crear tareas de producción
                         if (txData.category === 'online' && txData.products && txData.products.length > 0) {
                             // Crear tareas de producción para cada producto vendido
                             try {
                                 const tasksRef = collection(db, 'artifacts', appId, 'users', user.uid, 'productionTasks');
-                                
+
                                 for (const product of txData.products) {
                                     if (!product.productType || !product.musculosaColor || !product.musculosaSize) continue;
-                                    
-                                    const designName = product.musculosaDesign === 'otro' 
-                                        ? product.musculosaCustomDesign 
+
+                                    const designName = product.musculosaDesign === 'otro'
+                                        ? product.musculosaCustomDesign
                                         : MUSCULOSA_DESIGNS.find(d => d.id === product.musculosaDesign)?.name;
                                     const productName = PRODUCT_TYPES.find(p => p.id === product.productType)?.name || product.productType;
                                     const colorName = MUSCULOSA_COLORS.find(c => c.id === product.musculosaColor)?.name || product.musculosaColor;
                                     const sizeName = product.musculosaSize.toUpperCase();
-                                    
+
                                     // Crear tarea de producción
                                     await addDoc(tasksRef, {
                                         status: 'pendiente',
@@ -467,7 +526,7 @@
                                         priority: 'media',
                                         createdAt: serverTimestamp()
                                     });
-                                    
+
                                     console.log('✅ Tarea de producción creada:', { productName, colorName, sizeName, designName });
                                 }
                             } catch (taskError) {
@@ -475,30 +534,30 @@
                             }
                             try {
                                 console.log('🛒 Procesando descuento de stock para', txData.products.length, 'productos');
-                                
+
                                 const stockRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock');
                                 const stockQuery = query(stockRef);
-                                
+
                                 const stockSnapshot = await new Promise((resolve, reject) => {
                                     const unsubscribe = onSnapshot(stockQuery, (snapshot) => {
                                         unsubscribe();
                                         resolve(snapshot);
                                     }, reject);
                                 });
-                                
+
                                 // Procesar cada producto vendido
                                 for (const product of txData.products) {
                                     if (!product.productType || !product.musculosaColor || !product.musculosaSize) continue;
-                                    
+
                                     console.log('🛒 Procesando:', {
                                         tipo: product.productType,
                                         color: product.musculosaColor,
                                         talle: product.musculosaSize
                                     });
-                                    
+
                                     // Determinar el tipo de prenda a buscar según el tipo
                                     const productName = product.productType === 'musculosa' ? 'musculosa' : 'remera';
-                                    
+
                                     // Buscar la prenda que coincida con el tipo y color
                                     const matchingItem = stockSnapshot.docs.find(docSnap => {
                                         const data = docSnap.data();
@@ -511,22 +570,22 @@
                                         const matchColor = data.category === product.musculosaColor;
                                         return matchName && matchColor;
                                     });
-                                    
+
                                     if (matchingItem) {
                                         const itemData = matchingItem.data();
                                         const sizeKey = product.musculosaSize.toLowerCase();
                                         const currentStock = itemData.stock?.[sizeKey] || 0;
                                         const newStock = Math.max(0, currentStock - 1);
-                                        
+
                                         const itemDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'stock', matchingItem.id);
                                         await updateDoc(itemDocRef, {
                                             [`stock.${sizeKey}`]: newStock
                                         });
-                                        
+
                                         // Registrar en el historial
                                         const historyRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stockHistory');
-                                        const designName = product.musculosaDesign === 'otro' 
-                                            ? product.musculosaCustomDesign 
+                                        const designName = product.musculosaDesign === 'otro'
+                                            ? product.musculosaCustomDesign
                                             : MUSCULOSA_DESIGNS.find(d => d.id === product.musculosaDesign)?.name;
                                         await addDoc(historyRef, {
                                             action: 'sale',
@@ -541,7 +600,7 @@
                                             description: `Venta online - ${designName}`,
                                             createdAt: serverTimestamp()
                                         });
-                                        
+
                                         console.log(`✅ Stock actualizado:`, {
                                             prenda: itemData.name,
                                             color: product.musculosaColor,
@@ -558,9 +617,9 @@
                             }
                         }
                     }
-                } catch (e) { 
+                } catch (e) {
                     console.error('❌ Error al guardar transacción:', e);
-                    alert(`Error al guardar: ${e.message}`); 
+                    alert(`Error al guardar: ${e.message}`);
                     return;
                 }
                 setShowTransactionModal(false); setEditingTransaction(null);
@@ -579,10 +638,10 @@
                     return;
                 }
                 const { db, appId, deleteDoc, doc } = window.firebaseData;
-                try { 
-                    await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', id)); 
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', id));
                     console.log('✅ Transacción eliminada');
-                } catch (e) { 
+                } catch (e) {
                     console.error('❌ Error al eliminar:', e);
                     alert(`Error al eliminar: ${e.message}`);
                 }
@@ -594,14 +653,14 @@
                 const { db, appId, collection, addDoc, updateDoc, doc, onSnapshot, query, serverTimestamp } = window.firebaseData;
                 const collectionRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock');
                 const historyRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stockHistory');
-                const cleanData = { ...itemData }; 
+                const cleanData = { ...itemData };
                 const historyDescription = itemData.historyDescription || '';
 
                 try {
                     if (editingStock) {
                         const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'stock', itemData.id);
                         const { id, createdAt, historyDescription, ...dataToUpdate } = cleanData;
-                        
+
                         // Obtener datos anteriores para el historial
                         const stockQuery = query(collectionRef);
                         const stockSnapshot = await new Promise((resolve, reject) => {
@@ -610,12 +669,12 @@
                                 resolve(snapshot);
                             }, reject);
                         });
-                        
+
                         const oldDoc = stockSnapshot.docs.find(d => d.id === itemData.id);
                         const oldData = oldDoc?.data();
-                        
+
                         await updateDoc(docRef, dataToUpdate);
-                        
+
                         // Registrar cambios en el historial
                         if (oldData) {
                             const changes = [];
@@ -631,7 +690,7 @@
                                     });
                                 }
                             });
-                            
+
                             if (changes.length > 0) {
                                 await addDoc(historyRef, {
                                     action: 'update',
@@ -646,7 +705,7 @@
                     } else {
                         const { id, historyDescription, ...newItemData } = cleanData;
                         await addDoc(collectionRef, { ...newItemData, createdAt: serverTimestamp() });
-                        
+
                         // Registrar creación en el historial
                         await addDoc(historyRef, {
                             action: 'create',
@@ -664,7 +723,7 @@
             const handleDeleteStock = async (id) => {
                 if (!user) return;
                 const { db, appId, deleteDoc, collection, addDoc, doc, onSnapshot, query, serverTimestamp } = window.firebaseData;
-                
+
                 try {
                     // Obtener datos del item antes de eliminarlo
                     const stockRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock');
@@ -675,12 +734,12 @@
                             resolve(snapshot);
                         }, reject);
                     });
-                    
+
                     const itemDoc = stockSnapshot.docs.find(d => d.id === id);
                     const itemData = itemDoc?.data();
-                    
+
                     await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'stock', id));
-                    
+
                     // Registrar eliminación en el historial
                     if (itemData) {
                         const historyRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stockHistory');
@@ -701,12 +760,12 @@
             const handleFabClick = () => {
                 console.log('🎯 FAB clickeado, tab activo:', activeTab);
                 console.log('👤 Usuario actual:', user ? user.uid : 'NO AUTENTICADO');
-                
+
                 if (!user) {
                     alert('Esperando autenticación... Por favor, espera unos segundos y vuelve a intentar.');
                     return;
                 }
-                
+
                 if (activeTab === 'stock') {
                     console.log('📦 Abriendo modal de stock');
                     setEditingStock(null);
@@ -720,7 +779,7 @@
 
             const openEditTransaction = (tx) => { setEditingTransaction(tx); setShowTransactionModal(true); };
             const openEditStock = (item) => { setEditingStock(item); setShowStockModal(true); };
-            
+
             // --- HANDLERS TAREAS DE PRODUCCIÓN ---
             const handleUpdateTaskStatus = async (taskId, newStatus) => {
                 if (!user) return;
@@ -734,7 +793,7 @@
                     alert('Error al actualizar la tarea');
                 }
             };
-            
+
             const handleUpdateTaskNotes = async (taskId, notes) => {
                 if (!user) return;
                 const { db, appId, updateDoc, doc } = window.firebaseData;
@@ -747,7 +806,7 @@
                     alert('Error al actualizar las notas');
                 }
             };
-            
+
             const handleDeleteTask = async (taskId) => {
                 if (!user) return;
                 const { db, appId, deleteDoc, doc } = window.firebaseData;
@@ -801,14 +860,14 @@
                     {showAnalyticsModal && (
                         <AnalyticsScreen onClose={() => setShowAnalyticsModal(false)} transactions={transactions} stockItems={stockItems} />
                     )}
-                    
+
                     {showStockHistoryModal && (
                         <StockHistoryView onClose={() => setShowStockHistoryModal(false)} history={stockHistory} />
                     )}
-                    
+
                     {showProductionTasksModal && (
-                        <ProductionTasksScreen 
-                            onClose={() => setShowProductionTasksModal(false)} 
+                        <ProductionTasksScreen
+                            onClose={() => setShowProductionTasksModal(false)}
                             tasks={productionTasks}
                             onUpdateStatus={handleUpdateTaskStatus}
                             onUpdateNotes={handleUpdateTaskNotes}
@@ -821,110 +880,161 @@
 
         // --- COMPONENTES VISUALES ---
         function FinancialChart({ transactions }) {
+            const [hoveredPoint, setHoveredPoint] = useState(null);
+            
+            // Expandimos a los últimos 30 días para un mejor panorama
+            const daysToShow = 30;
+
             const chartData = useMemo(() => {
                 if (!transactions || transactions.length === 0) return null;
-                
-                // Calcular fecha de inicio (1 semana atrás)
+
+                const getLocalMidnight = (dateStr, fallbackTimestamp) => {
+                    if (dateStr && typeof dateStr === 'string' && dateStr.includes('-')) {
+                        const [y, m, d] = dateStr.split('-');
+                        return new Date(y, m - 1, d).getTime();
+                    }
+                    return fallbackTimestamp || 0;
+                };
+
                 const now = new Date();
-                const oneWeekAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-                oneWeekAgo.setHours(0, 0, 0, 0);
-                
-                // Ordenar todas las transacciones
+                const pastDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToShow);
+
                 const sorted = [...transactions].sort((a, b) => {
-                    const dateA = a.createdAt?.seconds ? new Date(a.createdAt.seconds * 1000) : new Date(a.fullDate);
-                    const dateB = b.createdAt?.seconds ? new Date(b.createdAt.seconds * 1000) : new Date(b.fullDate);
+                    const dateA = getLocalMidnight(a.fullDate, a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
+                    const dateB = getLocalMidnight(b.fullDate, b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
                     return dateA - dateB;
                 });
-                
-                // Calcular el balance inicial (desde todas las transacciones antes de las 2 semanas)
-                let initialBalance = 0;
-                let dataPoints = [];
-                
-                sorted.forEach(tx => {
-                    const amount = tx.type === 'income' ? parseFloat(tx.amount) : -parseFloat(tx.amount);
-                    const dateVal = tx.createdAt?.seconds ? (tx.createdAt.seconds * 1000) : new Date(tx.fullDate).getTime();
-                    
-                    if (dateVal < oneWeekAgo.getTime()) {
-                        // Transacciones antes de la semana: solo sumar al balance inicial
-                        initialBalance += amount;
-                    } else {
-                        // Transacciones dentro de la semana: agregar a dataPoints
-                        initialBalance += amount;
-                        dataPoints.push({ date: dateVal, balance: initialBalance });
-                    }
-                });
-                
-                // Si no hay puntos en la semana, crear una línea plana
-                if (dataPoints.length === 0) {
-                    dataPoints = [
-                        { date: oneWeekAgo.getTime(), balance: initialBalance },
-                        { date: now.getTime(), balance: initialBalance }
-                    ];
-                } else {
-                    // Agregar punto inicial si el primero no está al inicio
-                    if (dataPoints[0].date > oneWeekAgo.getTime()) {
-                        dataPoints.unshift({ date: oneWeekAgo.getTime(), balance: dataPoints[0].balance - (dataPoints[0].date > oneWeekAgo.getTime() ? 0 : 0) });
-                    }
-                    // Recalcular desde el balance inicial
-                    let runningBalance = initialBalance - dataPoints.reduce((sum, dp) => {
-                        const tx = sorted.find(t => {
-                            const d = t.createdAt?.seconds ? (t.createdAt.seconds * 1000) : new Date(t.fullDate).getTime();
-                            return d === dp.date;
-                        });
-                        return tx ? sum + (tx.type === 'income' ? parseFloat(tx.amount) : -parseFloat(tx.amount)) : sum;
-                    }, 0);
-                    
-                    dataPoints = [{ date: oneWeekAgo.getTime(), balance: runningBalance }];
-                    sorted.forEach(tx => {
-                        const dateVal = tx.createdAt?.seconds ? (tx.createdAt.seconds * 1000) : new Date(tx.fullDate).getTime();
-                        if (dateVal >= oneWeekAgo.getTime()) {
-                            const amount = tx.type === 'income' ? parseFloat(tx.amount) : -parseFloat(tx.amount);
-                            runningBalance += amount;
-                            dataPoints.push({ date: dateVal, balance: runningBalance });
-                        }
-                    });
-                    
-                    // Agregar punto final (hoy) si es necesario
-                    if (dataPoints[dataPoints.length - 1].date < now.getTime()) {
-                        dataPoints.push({ date: now.getTime(), balance: dataPoints[dataPoints.length - 1].balance });
-                    }
+
+                // Generar puntos diarios (uno por día)
+                const dailyData = {};
+                for (let i = 0; i <= daysToShow; i++) {
+                    const d = new Date(pastDate.getFullYear(), pastDate.getMonth(), pastDate.getDate() + i);
+                    dailyData[d.toLocaleDateString('en-US')] = { net: 0, income: 0, expense: 0 };
                 }
 
-                const width = 350; const height = 150; const padding = 20;
-                const minVal = Math.min(...dataPoints.map(d => d.balance), 0) - 100;
-                const maxVal = Math.max(...dataPoints.map(d => d.balance)) + 100;
-                const minDate = oneWeekAgo.getTime();
-                const maxDate = now.getTime();
-                const rangeY = maxVal - minVal || 1;
+                sorted.forEach(tx => {
+                    const amount = parseFloat(tx.amount);
+                    const isIncome = tx.type === 'income';
+                    const dateVal = getLocalMidnight(tx.fullDate, tx.createdAt?.seconds ? tx.createdAt.seconds * 1000 : 0);
+                    const txDate = new Date(dateVal);
+                    
+                    if (dateVal >= pastDate.getTime()) {
+                         const dateKey = txDate.toLocaleDateString('en-US');
+                         if(dailyData[dateKey]) {
+                             if(isIncome) dailyData[dateKey].income += amount;
+                             else dailyData[dateKey].expense += amount;
+                             dailyData[dateKey].net += isIncome ? amount : -amount;
+                         }
+                    }
+                });
+
+                let dataPoints = [];
+                for (let i = 0; i <= daysToShow; i++) {
+                    const d = new Date(pastDate.getFullYear(), pastDate.getMonth(), pastDate.getDate() + i);
+                    const key = d.toLocaleDateString('en-US');
+                    dataPoints.push({
+                        date: d,
+                        timestamp: d.getTime(),
+                        net: dailyData[key].net,
+                        income: dailyData[key].income,
+                        expense: dailyData[key].expense
+                    });
+                }
+
+                const viewBoxWidth = 800;
+                const viewBoxHeight = 350;
+                const paddingX = 40;
+                const paddingYTop = 30;
+                const paddingYBottom = 60;
+                
+                const usableWidth = viewBoxWidth - (paddingX * 2);
+                const usableHeight = viewBoxHeight - paddingYTop - paddingYBottom;
+
+                const minVal = Math.min(...dataPoints.map(d => d.net));
+                const maxVal = Math.max(...dataPoints.map(d => d.net));
+                
+                // Si maxVal y minVal son idénticos o 0, prevenimos divisiones por cero
+                const yRange = (maxVal - minVal) === 0 ? 10 : (maxVal - minVal);
+                const graphMinY = minVal - (yRange * 0.1);
+                const graphMaxY = maxVal + (yRange * 0.1);
+                const effectiveYRange = graphMaxY - graphMinY;
+                
+                const gridLines = [];
+                for (let i = 0; i <= 4; i++) {
+                    const value = graphMinY + (effectiveYRange * (i / 4));
+                    const y = viewBoxHeight - paddingYBottom - (usableHeight * (i / 4));
+                    gridLines.push({ value, y });
+                }
+
+                const minDate = dataPoints[0].timestamp;
+                const maxDate = dataPoints[dataPoints.length - 1].timestamp;
                 const rangeX = maxDate - minDate || 1;
 
                 const points = dataPoints.map(d => {
-                    const x = ((d.date - minDate) / rangeX) * width;
-                    const y = height - padding - (((d.balance - minVal) / rangeY) * (height - (padding * 2)));
-                    return { x, y };
+                    const x = paddingX + ((d.timestamp - minDate) / rangeX) * usableWidth;
+                    const y = viewBoxHeight - paddingYBottom - (((d.net - graphMinY) / effectiveYRange) * usableHeight);
+                    return { ...d, x, y };
                 });
 
-                // Crear curva suave usando bezier
                 let linePath = `M ${points[0].x},${points[0].y}`;
-                for (let i = 1; i < points.length; i++) {
-                    const curr = points[i];
-                    const prev = points[i - 1];
-                    const cpx = prev.x + (curr.x - prev.x) * 0.5;
-                    linePath += ` Q ${cpx},${prev.y} ${cpx},${(prev.y + curr.y) / 2}`;
-                    linePath += ` Q ${cpx},${curr.y} ${curr.x},${curr.y}`;
+                // Curvas más orgánicas
+                for (let i = 0; i < points.length - 1; i++) {
+                    const p0 = points[i === 0 ? 0 : i - 1];
+                    const p1 = points[i];
+                    const p2 = points[i + 1];
+                    const p3 = points[i + 2 === points.length ? i + 1 : i + 2];
+
+                    const tension = 0.2;
+                    const cp1x = p1.x + (p2.x - p0.x) * tension;
+                    const cp1y = p1.y + (p2.y - p0.y) * tension;
+                    const cp2x = p2.x - (p3.x - p1.x) * tension;
+                    const cp2y = p2.y - (p3.y - p1.y) * tension;
+                    
+                    linePath += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
                 }
-                const areaPath = `M ${points[0].x},${height} L ${points[0].x},${points[0].y} ${linePath.substring(2)} L ${points[points.length-1].x},${height} Z`;
-                const lastX = points[points.length - 1].x;
-                const lastY = points[points.length - 1].y;
-                const startDateStr = new Date(oneWeekAgo).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+
+                // Generar path de area desde el zeroY real para que no baje todo si hay negativos
+                const zeroY = viewBoxHeight - paddingYBottom - (((0 - graphMinY) / effectiveYRange) * usableHeight);
+                const safeZeroY = (isNaN(zeroY) || zeroY < 0 || zeroY > viewBoxHeight) ? viewBoxHeight - paddingYBottom : zeroY;
+                
+                const areaPath = `M ${points[0].x},${safeZeroY} L ${points[0].x},${points[0].y} ${linePath.substring(2)} L ${points[points.length - 1].x},${safeZeroY} Z`;
+
+                const startDateStr = new Date(pastDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
                 const endDateStr = new Date(now).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 
-                return { linePath, areaPath, lastX, lastY, startDateStr, endDateStr };
-            }, [transactions]);
+                return { 
+                    linePath, areaPath, points, gridLines, 
+                    viewBoxWidth, viewBoxHeight, paddingX, paddingYBottom, safeZeroY,
+                    startDateStr, endDateStr
+                };
+            }, [transactions, daysToShow]);
+
+            const svgRef = useRef(null);
+            const handleMouseMove = (e) => {
+                if (!chartData || !svgRef.current) return;
+                const rect = svgRef.current.getBoundingClientRect();
+                const xRate = (e.clientX - rect.left) / rect.width;
+                const localX = xRate * chartData.viewBoxWidth;
+                
+                let closestPoint = chartData.points[0];
+                let minDiff = Math.abs(chartData.points[0].x - localX);
+                for (let i = 1; i < chartData.points.length; i++) {
+                    const diff = Math.abs(chartData.points[i].x - localX);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestPoint = chartData.points[i];
+                    }
+                }
+                setHoveredPoint(closestPoint);
+            };
+
+            const handleMouseLeave = () => {
+                setHoveredPoint(null);
+            };
 
             if (!transactions || transactions.length === 0) {
                 return (
-                    <div className="h-52 w-full flex flex-col items-center justify-center text-text-muted bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <div className="h-64 w-full flex flex-col items-center justify-center text-text-muted bg-gray-50 rounded-xl border border-dashed border-gray-200">
                         <span className="material-symbols-outlined text-4xl mb-2 opacity-50">bar_chart</span>
                         <p className="text-sm font-medium">Sin datos suficientes</p>
                     </div>
@@ -933,32 +1043,166 @@
             if (!chartData) return null;
 
             return (
-                <>
-                    <div className="relative h-52 w-full">
-                        <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 350 150">
+                <div className="relative w-full overflow-visible bg-white rounded-2xl shadow-soft border border-pink-50/50 p-4 mb-2">
+                    <div className="flex justify-between items-end mb-4 px-2">
+                        <div>
+                            <h3 className="text-sm font-bold text-text-main flex items-center gap-1.5">
+                                <span className="material-symbols-outlined !text-[18px] text-primary">insights</span>
+                                Movimientos Diarios
+                            </h3>
+                            <p className="text-xs text-text-muted mt-0.5 ml-6">Ingresos y Egresos (30 días)</p>
+                        </div>
+                    </div>
+
+                    <div className="relative w-full" style={{ paddingBottom: '45%' }}>
+                        <svg 
+                            ref={svgRef}
+                            className="absolute top-0 left-0 w-full h-full cursor-crosshair overflow-visible touch-none" 
+                            viewBox={`0 0 ${chartData.viewBoxWidth} ${chartData.viewBoxHeight}`}
+                            preserveAspectRatio="none"
+                            onMouseMove={handleMouseMove}
+                            onTouchMove={(e) => handleMouseMove(e.touches[0])}
+                            onMouseLeave={handleMouseLeave}
+                            onTouchEnd={handleMouseLeave}
+                        >
                             <defs>
-                                <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
-                                    <stop offset="0%" stopColor="#f4258c" stopOpacity="0.2"></stop>
-                                    <stop offset="100%" stopColor="#f4258c" stopOpacity="0"></stop>
+                                <linearGradient id="premiumGradient" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stopColor="#f4258c" stopOpacity="0.4"></stop>
+                                    <stop offset="50%" stopColor="#f4258c" stopOpacity="0.1"></stop>
+                                    <stop offset="100%" stopColor="#f4258c" stopOpacity="0.0"></stop>
                                 </linearGradient>
+                                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feGaussianBlur stdDeviation="3" result="blur" />
+                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                </filter>
                             </defs>
-                            <path d={chartData.areaPath} fill="url(#chartGradient)" stroke="none"></path>
-                            <path d={chartData.linePath} fill="none" stroke="#f4258c" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3"></path>
-                            <circle cx={chartData.lastX} cy={chartData.lastY} fill="#f4258c" r="6" stroke="white" strokeWidth="2.5"></circle>
+
+                            {chartData.gridLines.map((gl, idx) => (
+                                <g key={`gridY-${idx}`}>
+                                    <line 
+                                        x1={chartData.paddingX} 
+                                        x2={chartData.viewBoxWidth - chartData.paddingX} 
+                                        y1={gl.y} 
+                                        y2={gl.y} 
+                                        stroke="#f4f4f5" 
+                                        strokeWidth="1.5" 
+                                        strokeDasharray="6 6"
+                                    />
+                                    <text 
+                                        x={chartData.paddingX - 10} 
+                                        y={gl.y + 4} 
+                                        fill="#a1a1aa" 
+                                        fontSize="11" 
+                                        textAnchor="end"
+                                        fontFamily="Inter, sans-serif"
+                                        fontWeight="600"
+                                    >
+                                        ${Math.round(gl.value).toLocaleString('es-ES')}
+                                    </text>
+                                </g>
+                            ))}
+                            
+                            {/* Línea Base Zero */}
+                            {chartData.safeZeroY > 0 && chartData.safeZeroY < chartData.viewBoxHeight && (
+                                <line 
+                                    x1={chartData.paddingX} 
+                                    x2={chartData.viewBoxWidth - chartData.paddingX} 
+                                    y1={chartData.safeZeroY} 
+                                    y2={chartData.safeZeroY} 
+                                    stroke="#ec4899" 
+                                    strokeWidth="1" 
+                                    opacity="0.3"
+                                />
+                            )}
+
+                            <text x={chartData.points[0].x} y={chartData.viewBoxHeight - 30} fill="#a1a1aa" fontSize="12" textAnchor="start" fontFamily="Inter, sans-serif" fontWeight="600">{chartData.startDateStr}</text>
+                            <text x={chartData.points[Math.floor(chartData.points.length / 2)].x} y={chartData.viewBoxHeight - 30} fill="#a1a1aa" fontSize="12" textAnchor="middle" fontFamily="Inter, sans-serif" fontWeight="600">hace 15 días</text>
+                            <text x={chartData.points[chartData.points.length - 1].x} y={chartData.viewBoxHeight - 30} fill="#a1a1aa" fontSize="12" textAnchor="end" fontFamily="Inter, sans-serif" fontWeight="600">{chartData.endDateStr}</text>
+
+                            <g className="animate-fade-in-up" strokeLinecap="round" strokeLinejoin="round">
+                                <path d={chartData.areaPath} fill="url(#premiumGradient)" stroke="none" />
+                                <path d={chartData.linePath} fill="none" stroke="#f4258c" strokeWidth="4" filter="url(#glow)"/>
+                                <path d={chartData.linePath} fill="none" stroke="#f4258c" strokeWidth="3" />
+                            </g>
+
+                            <circle 
+                                cx={chartData.points[chartData.points.length - 1].x} 
+                                cy={chartData.points[chartData.points.length - 1].y} 
+                                fill="white" 
+                                r="5" 
+                                stroke="#f4258c" 
+                                strokeWidth="3"
+                            />
+
+                            {hoveredPoint && (
+                                <g>
+                                    <line 
+                                        x1={hoveredPoint.x} 
+                                        x2={hoveredPoint.x} 
+                                        y1={hoveredPoint.y} 
+                                        y2={chartData.viewBoxHeight - chartData.paddingYBottom} 
+                                        stroke="#f4258c" 
+                                        strokeWidth="1.5" 
+                                        strokeDasharray="4 4" 
+                                    />
+                                    <circle 
+                                        cx={hoveredPoint.x} 
+                                        cy={hoveredPoint.y} 
+                                        fill="#f4258c" 
+                                        r="6" 
+                                        stroke="white" 
+                                        strokeWidth="2.5"
+                                        className="transition-all duration-300 pointer-events-none drop-shadow-md"
+                                    />
+                                </g>
+                            )}
                         </svg>
+
+                        {hoveredPoint && (
+                            <div 
+                                className="absolute bg-gray-900/95 text-white rounded-xl shadow-2xl px-4 py-3 pointer-events-none transition-all duration-100 block backdrop-blur-md z-50 border border-white/10"
+                                style={{
+                                    left: `max(15px, min(calc(${(hoveredPoint.x / chartData.viewBoxWidth) * 100}% - 70px), calc(100% - 140px)))`,
+                                    top: `min(calc(${(hoveredPoint.y / chartData.viewBoxHeight) * 100}% - 80px), calc(100% - 100px))`
+                                }}
+                            >
+                                <p className="text-[11px] text-gray-300 font-bold uppercase tracking-wider mb-2 pb-1 border-b border-white/10">
+                                    {new Date(hoveredPoint.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}
+                                </p>
+                                
+                                <div className="flex flex-col gap-1.5 min-w-[120px]">
+                                    {hoveredPoint.income > 0 && (
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="text-gray-400">Ingresos</span>
+                                            <span className="text-green-400 font-bold">+${hoveredPoint.income.toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                    {hoveredPoint.expense > 0 && (
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="text-gray-400">Egresos</span>
+                                            <span className="text-red-400 font-bold">-${hoveredPoint.expense.toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="flex justify-between items-center mt-1 pt-1 border-t border-white/10">
+                                        <span className="text-xs font-semibold text-gray-200">Total Día</span>
+                                        <span className={`text-sm font-extrabold ${hoveredPoint.net > 0 ? 'text-green-400' : hoveredPoint.net < 0 ? 'text-red-400' : 'text-white'}`}>
+                                            ${hoveredPoint.net.toLocaleString()}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                    <div className="flex justify-between mt-4 text-xs text-text-muted font-medium">
-                        <span>{chartData.startDateStr}</span><span>{chartData.endDateStr}</span>
-                    </div>
-                </>
+                </div>
             );
         }
 
         // --- VISTAS ---
         function DashboardView({ stats, transactions, onTransactionClick, onViewAll, onOpenAnalytics, onOpenProductionTasks, productionTasks }) {
             const scrollRef = useRef(null);
-            useEffect(() => { if(scrollRef.current) scrollRef.current.scrollTop = 0; }, []);
-            
+            useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, []);
+
             // Calcular cantidad de tareas en producción
             const tasksInProgress = productionTasks.filter(task => task.status === 'produccion').length;
             const tasksPending = productionTasks.filter(task => task.status === 'pendiente').length;
@@ -968,7 +1212,7 @@
                     {/* Logo Centrado */}
                     <div className="flex justify-center items-center px-4 py-3 bg-background-light">
                         <div className="w-full max-w-sm flex items-center justify-center">
-                            <img src="logo-delfina-dashboard.png" alt="Delfina Logo" style={{maxWidth: '100%', height: 'auto', maxHeight: '120px'}} />
+                            <img src="logo-delfina-dashboard.png" alt="Delfina Logo" style={{ maxWidth: '100%', height: 'auto', maxHeight: '120px' }} />
                         </div>
                     </div>
 
@@ -1047,7 +1291,7 @@
                         <section>
                             <div className="flex items-center justify-between mb-4"><h3 className="text-text-main font-bold text-xl">Movimientos Recientes</h3><button onClick={onViewAll} className="text-primary text-sm font-semibold hover:text-primary-dark transition-colors">Ver todos</button></div>
                             <div className="flex flex-col gap-4">
-                                {transactions.length === 0 ? <p className="text-text-muted text-sm italic text-center py-4">No hay movimientos.</p> : transactions.slice(0,3).map((tx) => <DashboardTransactionItem key={tx.id} data={tx} onClick={() => onTransactionClick(tx)} />)}
+                                {transactions.length === 0 ? <p className="text-text-muted text-sm italic text-center py-4">No hay movimientos.</p> : transactions.slice(0, 3).map((tx) => <DashboardTransactionItem key={tx.id} data={tx} onClick={() => onTransactionClick(tx)} />)}
                             </div>
                         </section>
                     </main>
@@ -1057,25 +1301,25 @@
 
         function TransactionsView({ transactions, totals, onTransactionClick }) {
             const scrollRef = useRef(null);
-            
+
             // --- State para Filtros ---
-            const [filterDate, setFilterDate] = useState('all'); 
+            const [filterDate, setFilterDate] = useState('all');
             const [filterCategory, setFilterCategory] = useState('all');
             const [filterType, setFilterType] = useState('all');
             const [filterPaymentMethod, setFilterPaymentMethod] = useState('all');
             const [customRange, setCustomRange] = useState({ start: '', end: '' });
-            
-            const [activeDropdown, setActiveDropdown] = useState(null); 
+
+            const [activeDropdown, setActiveDropdown] = useState(null);
             const [showCustomDateModal, setShowCustomDateModal] = useState(false);
 
             useEffect(() => {
                 const handleClick = () => setActiveDropdown(null);
-                if(activeDropdown) window.addEventListener('click', handleClick);
+                if (activeDropdown) window.addEventListener('click', handleClick);
                 return () => window.removeEventListener('click', handleClick);
             }, [activeDropdown]);
 
             useEffect(() => {
-                if(scrollRef.current) scrollRef.current.scrollTop = 0;
+                if (scrollRef.current) scrollRef.current.scrollTop = 0;
             }, []);
 
             // --- Lógica de Filtrado ---
@@ -1083,15 +1327,15 @@
                 return transactions.filter(tx => {
                     const dateStr = tx.fullDate || "2023-01-01";
                     const [y, m, d] = dateStr.split('-').map(Number);
-                    const txDate = new Date(y, m-1, d); 
+                    const txDate = new Date(y, m - 1, d);
                     const now = new Date();
-                    now.setHours(0,0,0,0);
+                    now.setHours(0, 0, 0, 0);
 
                     let dateMatch = true;
                     if (filterDate === 'year') dateMatch = txDate.getFullYear() === now.getFullYear();
                     else if (filterDate === 'month') dateMatch = txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
                     else if (filterDate === 'week') {
-                        const day = now.getDay() || 7; if(day !== 1) now.setHours(-24 * (day - 1));
+                        const day = now.getDay() || 7; if (day !== 1) now.setHours(-24 * (day - 1));
                         const weekStart = now.getTime(); const weekEnd = weekStart + (7 * 24 * 60 * 60 * 1000);
                         const txTime = txDate.getTime(); dateMatch = txTime >= weekStart && txTime < weekEnd;
                     } else if (filterDate === 'custom') {
@@ -1104,7 +1348,7 @@
 
                     let catMatch = filterCategory === 'all' || tx.category === filterCategory;
                     let typeMatch = filterType === 'all' || tx.type === filterType;
-                    
+
                     // Filtro de método de pago: si está activo, solo mostrar las que coincidan
                     let paymentMatch = true;
                     if (filterPaymentMethod !== 'all') {
@@ -1123,7 +1367,7 @@
 
             const grouped = filteredTransactions.reduce((acc, tx) => {
                 const [y, m, d] = (tx.fullDate || "").split('-');
-                const dateObj = new Date(y, m-1, d);
+                const dateObj = new Date(y, m - 1, d);
                 const today = new Date();
                 const yesterday = new Date(today);
                 yesterday.setDate(yesterday.getDate() - 1);
@@ -1235,10 +1479,10 @@
                             <div className="bg-white rounded-2xl p-6 w-full max-w-xs shadow-2xl animate-slide-up">
                                 <h3 className="text-lg font-bold text-text-main mb-4">Filtrar por Fecha</h3>
                                 <div className="space-y-4">
-                                    <div><label className="text-xs font-semibold text-text-muted uppercase mb-1 block">Desde</label><input type="date" value={customRange.start} onChange={(e) => setCustomRange({...customRange, start: e.target.value})} className="w-full rounded-xl border-gray-200 bg-gray-50 text-sm focus:ring-primary focus:border-primary"/></div>
-                                    <div><label className="text-xs font-semibold text-text-muted uppercase mb-1 block">Hasta</label><input type="date" value={customRange.end} onChange={(e) => setCustomRange({...customRange, end: e.target.value})} className="w-full rounded-xl border-gray-200 bg-gray-50 text-sm focus:ring-primary focus:border-primary"/></div>
+                                    <div><label className="text-xs font-semibold text-text-muted uppercase mb-1 block">Desde</label><input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="w-full rounded-xl border-gray-200 bg-gray-50 text-sm focus:ring-primary focus:border-primary" /></div>
+                                    <div><label className="text-xs font-semibold text-text-muted uppercase mb-1 block">Hasta</label><input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="w-full rounded-xl border-gray-200 bg-gray-50 text-sm focus:ring-primary focus:border-primary" /></div>
                                     <div className="flex gap-2 pt-2">
-                                        <button onClick={() => {setShowCustomDateModal(false); setFilterDate('all')}} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-text-muted font-medium text-sm">Cancelar</button>
+                                        <button onClick={() => { setShowCustomDateModal(false); setFilterDate('all') }} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-text-muted font-medium text-sm">Cancelar</button>
                                         <button onClick={() => setShowCustomDateModal(false)} className="flex-1 py-2.5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/30">Aplicar</button>
                                     </div>
                                 </div>
@@ -1255,7 +1499,7 @@
             const [search, setSearch] = useState('');
             const [activeCategory, setActiveCategory] = useState('all');
 
-            useEffect(() => { if(scrollRef.current) scrollRef.current.scrollTop = 0; }, []);
+            useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, []);
 
             // Filtros de Stock por Color
             const filteredItems = useMemo(() => {
@@ -1270,13 +1514,13 @@
             const stats = useMemo(() => {
                 let totalItems = 0;
                 let lowStockCount = 0;
-                
+
                 items.forEach(item => {
                     const itemTotal = (item.stock?.s || 0) + (item.stock?.m || 0) + (item.stock?.l || 0) + (item.stock?.xl || 0);
                     totalItems += itemTotal;
                     if (itemTotal < 10) lowStockCount++;
                 });
-                
+
                 return { totalItems, lowStockCount };
             }, [items]);
 
@@ -1302,11 +1546,11 @@
                         <section className="flex gap-3">
                             <div className="relative flex-1">
                                 <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-pink-300">search</span>
-                                <input 
+                                <input
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-none bg-white shadow-soft text-sm text-text-main focus:ring-2 focus:ring-primary/50 placeholder-pink-300/70" 
-                                    placeholder="Buscar prendas..." 
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-none bg-white shadow-soft text-sm text-text-main focus:ring-2 focus:ring-primary/50 placeholder-pink-300/70"
+                                    placeholder="Buscar prendas..."
                                     type="text"
                                 />
                             </div>
@@ -1336,13 +1580,13 @@
                         </section>
 
                         <section className="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
-                            <button 
+                            <button
                                 onClick={() => setActiveCategory('all')}
                                 className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCategory === 'all' ? 'bg-primary text-white shadow-md' : 'bg-white text-text-muted border border-pink-100'}`}>
                                 Todas
                             </button>
                             {STOCK_CATEGORIES.map(cat => (
-                                <button 
+                                <button
                                     key={cat.id}
                                     onClick={() => setActiveCategory(cat.id)}
                                     className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCategory === cat.id ? 'bg-primary text-white shadow-md' : 'bg-white text-text-muted border border-pink-100 hover:bg-pink-50'}`}>
@@ -1358,7 +1602,7 @@
                                 filteredItems.map(item => {
                                     // Calcular total para la tarjeta
                                     const totalStock = (item.stock?.s || 0) + (item.stock?.m || 0) + (item.stock?.l || 0) + (item.stock?.xl || 0);
-                                    
+
                                     // Etiqueta de color
                                     const colorLabels = {
                                         azul: 'Azul', blanco: 'Blanco', chocolate: 'Choco',
@@ -1368,13 +1612,13 @@
                                         azul: '#3b82f6', blanco: '#f3f4f6', chocolate: '#7B3F00',
                                         gris_petroleo: '#374151', negro: '#000000', verde: '#22c55e'
                                     };
-                                    
+
                                     return (
                                         <div key={item.id} onClick={() => onItemClick(item)} className="bg-white p-3 rounded-2xl shadow-soft border border-pink-50 flex items-center gap-4 transition-transform active:scale-[0.99] cursor-pointer">
                                             <div className="h-20 w-20 shrink-0 rounded-xl overflow-hidden relative bg-gray-100 flex items-center justify-center text-primary">
                                                 <span className="material-symbols-outlined !text-[32px]">checkroom</span>
                                                 {item.category && (
-                                                    <div className="absolute bottom-1 right-1 px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm" style={{ 
+                                                    <div className="absolute bottom-1 right-1 px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm" style={{
                                                         backgroundColor: colorCodes[item.category],
                                                         color: item.category === 'blanco' ? '#000' : '#fff',
                                                         border: item.category === 'blanco' ? '1px solid #d1d5db' : 'none'
@@ -1404,7 +1648,7 @@
                                                         <span className="text-pink-200">|</span>
                                                         <span>XL: <span className="text-text-main font-bold">{item.stock?.xl || 0}</span></span>
                                                     </div>
-                                                    
+
                                                     {/* Badge de Total */}
                                                     <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${totalStock < 10 ? 'bg-orange-50' : 'bg-green-50'}`}>
                                                         <span className={`w-1.5 h-1.5 rounded-full ${totalStock < 10 ? 'bg-orange-500' : 'bg-green-500'}`}></span>
@@ -1427,17 +1671,17 @@
             const formatDate = (timestamp) => {
                 if (!timestamp) return 'Fecha desconocida';
                 const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
-                return date.toLocaleDateString('es-AR', { 
-                    day: '2-digit', 
-                    month: 'short', 
+                return date.toLocaleDateString('es-AR', {
+                    day: '2-digit',
+                    month: 'short',
                     year: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
                 });
             };
-            
+
             const getActionIcon = (action) => {
-                switch(action) {
+                switch (action) {
                     case 'create': return 'add_circle';
                     case 'update': return 'edit';
                     case 'delete': return 'delete';
@@ -1445,9 +1689,9 @@
                     default: return 'info';
                 }
             };
-            
+
             const getActionColor = (action) => {
-                switch(action) {
+                switch (action) {
                     case 'create': return 'text-green-600 bg-green-50';
                     case 'update': return 'text-blue-600 bg-blue-50';
                     case 'delete': return 'text-red-600 bg-red-50';
@@ -1455,9 +1699,9 @@
                     default: return 'text-gray-600 bg-gray-50';
                 }
             };
-            
+
             const getActionLabel = (action) => {
-                switch(action) {
+                switch (action) {
                     case 'create': return 'Creación';
                     case 'update': return 'Actualización';
                     case 'delete': return 'Eliminación';
@@ -1465,7 +1709,7 @@
                     default: return 'Movimiento';
                 }
             };
-            
+
             const colorNames = {
                 azul: 'Azul', blanco: 'Blanco', chocolate: 'Chocolate',
                 gris_petroleo: 'Gris Petróleo', negro: 'Negro', verde: 'Verde'
@@ -1480,7 +1724,7 @@
                         <h2 className="text-text-main text-lg font-bold tracking-tight">Historial de Stock</h2>
                         <button className="w-10 h-10 opacity-0 pointer-events-none"></button>
                     </header>
-                    
+
                     <main className="flex-1 overflow-y-auto px-6 py-2 space-y-4 pb-32">
                         {history.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -1501,12 +1745,12 @@
                                                 </span>
                                                 <span className="text-xs text-text-muted">{formatDate(entry.createdAt)}</span>
                                             </div>
-                                            
+
                                             <h4 className="text-text-main font-bold text-sm">{entry.itemName}</h4>
                                             <p className="text-text-muted text-xs">
                                                 {colorNames[entry.itemColor] || entry.itemColor}
                                             </p>
-                                            
+
                                             {entry.changes && entry.changes.length > 0 && (
                                                 <div className="mt-2 space-y-1">
                                                     {entry.changes.map((change, idx) => (
@@ -1524,7 +1768,7 @@
                                                     ))}
                                                 </div>
                                             )}
-                                            
+
                                             {entry.stock && !entry.changes && (
                                                 <div className="mt-2 flex gap-2 text-xs text-text-muted">
                                                     <span>S: {entry.stock.s || 0}</span>
@@ -1533,7 +1777,7 @@
                                                     <span>XL: {entry.stock.xl || 0}</span>
                                                 </div>
                                             )}
-                                            
+
                                             {entry.description && (
                                                 <p className="mt-2 text-xs text-text-muted italic bg-pink-50/50 rounded-lg px-2 py-1">
                                                     "{entry.description}"
@@ -1555,7 +1799,7 @@
             const [collection, setCollection] = useState(initialData?.collection || '');
             const [category, setCategory] = useState(initialData?.category || '');
             const [historyDescription, setHistoryDescription] = useState('');
-            
+
             // Estados individuales para talles
             const [stockS, setStockS] = useState(initialData?.stock?.s || '');
             const [stockM, setStockM] = useState(initialData?.stock?.m || '');
@@ -1568,7 +1812,7 @@
                     alert('Por favor completa el nombre y color.');
                     return;
                 }
-                
+
                 const newItem = {
                     id: initialData?.id || Date.now().toString(),
                     name,
@@ -1613,7 +1857,7 @@
                                     <label className="text-sm font-medium text-text-main ml-1">Colección / Detalle</label>
                                     <input value={collection} onChange={e => setCollection(e.target.value)} className="block w-full px-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary focus:border-primary sm:text-sm placeholder-gray-400" placeholder="Ej: Verano '24" />
                                 </div>
-                                
+
                                 {/* Stock por Talle Row */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-text-main ml-1">Stock por Talle</label>
@@ -1643,7 +1887,7 @@
                                     <div className="grid grid-cols-2 gap-3 mt-2">
                                         {STOCK_CATEGORIES.map((cat) => (
                                             <label key={cat.id} className="cursor-pointer relative group">
-                                                <input type="radio" name="stock_category" className="peer sr-only" checked={category === cat.id} onChange={() => setCategory(cat.id)}/>
+                                                <input type="radio" name="stock_category" className="peer sr-only" checked={category === cat.id} onChange={() => setCategory(cat.id)} />
                                                 <div className={`flex items-center justify-center p-3 rounded-xl border border-pink-100 bg-gray-50 peer-checked:bg-pink-50 peer-checked:border-primary peer-checked:text-primary transition-all`}>
                                                     <div className={`w-3 h-3 rounded-full mr-2 ${cat.colorCode}`}></div>
                                                     <span className="text-xs font-medium">{cat.name}</span>
@@ -1653,22 +1897,22 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             {/* Descripción para el historial (opcional) */}
                             <div className="bg-pink-50/50 rounded-2xl shadow-sm p-6 space-y-3 border border-pink-100">
                                 <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined text-primary !text-[20px]">history</span>
                                     <label className="text-sm font-medium text-text-main">Nota para el Historial (Opcional)</label>
                                 </div>
-                                <input 
-                                    value={historyDescription} 
-                                    onChange={e => setHistoryDescription(e.target.value)} 
-                                    className="block w-full px-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary focus:border-primary sm:text-sm placeholder-gray-400" 
-                                    placeholder="Ej: Reposición de stock, corrección de inventario, etc." 
+                                <input
+                                    value={historyDescription}
+                                    onChange={e => setHistoryDescription(e.target.value)}
+                                    className="block w-full px-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary focus:border-primary sm:text-sm placeholder-gray-400"
+                                    placeholder="Ej: Reposición de stock, corrección de inventario, etc."
                                 />
                                 <p className="text-xs text-text-muted">Esta nota se guardará en el historial para recordar el motivo del cambio</p>
                             </div>
-                            
+
                             <div className="flex flex-col gap-3">
                                 <button type="submit" className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-pink-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg">
                                     <span>{isEditing ? 'Guardar Cambios' : 'Crear Producto'}</span>
@@ -1692,12 +1936,12 @@
             const scrollRef = useRef(null);
             const [analyticsProductType, setAnalyticsProductType] = useState('musculosa');
             const [stockProductType, setStockProductType] = useState('remera');
-            
+
             const analyticsData = useMemo(() => {
                 let totalIncome = 0;
                 let totalExpense = 0;
                 const soldByProduct = { musculosa: 0, remera: 0 };
-                
+
                 // Contadores para análisis
                 const baseDesignCounts = {
                     aceitunas: 0, concha_de_mar: 0, libelula: 0, limon: 0,
@@ -1726,7 +1970,7 @@
                 const expenseByCategory = {
                     musculosas: 0, remeras: 0, merceria: 0, logistica: 0, marketing: 0
                 };
-                
+
                 // Análisis mensual (este mes vs mes anterior)
                 const now = new Date();
                 const currentMonth = now.getMonth();
@@ -1737,13 +1981,13 @@
                 let currentMonthExpense = 0;
                 let previousMonthIncome = 0;
                 let previousMonthExpense = 0;
-                
+
                 transactions.forEach(tx => {
                     const amount = parseFloat(tx.amount) || 0;
                     const txDate = tx.fullDate ? new Date(tx.fullDate) : new Date();
                     const txMonth = txDate.getMonth();
                     const txYear = txDate.getFullYear();
-                    
+
                     if (tx.type === 'income') {
                         totalIncome += amount;
                         if (txYear === currentYear && txMonth === currentMonth) {
@@ -1751,7 +1995,7 @@
                         } else if (txYear === previousYear && txMonth === previousMonth) {
                             previousMonthIncome += amount;
                         }
-                        
+
                         // Contar método de pago para ingresos
                         const method = tx.paymentMethod || 'transferencia';
                         if (paymentMethodIncome.hasOwnProperty(method)) {
@@ -1764,19 +2008,19 @@
                         } else if (txYear === previousYear && txMonth === previousMonth) {
                             previousMonthExpense += amount;
                         }
-                        
+
                         // Gastos por categoría
                         if (expenseByCategory.hasOwnProperty(tx.category)) {
                             expenseByCategory[tx.category] += amount;
                         }
                     }
-                    
+
                     // Contar método de pago
                     const method = tx.paymentMethod || 'transferencia';
                     if (paymentMethodCounts.hasOwnProperty(method)) {
                         paymentMethodCounts[method]++;
                     }
-                    
+
                     // Analizar ventas por tipo de prenda
                     if (tx.category === 'online') {
                         // Soportar tanto el nuevo formato (products array) como el antiguo (campos individuales)
@@ -1786,13 +2030,13 @@
                             musculosaColor: tx.musculosaColor,
                             musculosaSize: tx.musculosaSize
                         }] : []);
-                        
+
                         productsArray.forEach(product => {
                             if (!product.productType || !product.musculosaDesign) return;
-                            
+
                             const type = product.productType === 'remera' ? 'remera' : 'musculosa';
                             soldByProduct[type]++;
-                            
+
                             // Diseño
                             const designCounts = designCountsByProduct[type];
                             if (designCounts && designCounts.hasOwnProperty(product.musculosaDesign)) {
@@ -1800,13 +2044,13 @@
                             } else if (designCounts) {
                                 designCounts.otro++;
                             }
-                            
+
                             // Color
                             const colorCounts = colorCountsByProduct[type];
                             if (product.musculosaColor && colorCounts && colorCounts.hasOwnProperty(product.musculosaColor)) {
                                 colorCounts[product.musculosaColor]++;
                             }
-                            
+
                             // Talle
                             const sizeCounts = sizeCountsByProduct[type];
                             if (product.musculosaSize && sizeCounts) {
@@ -1833,10 +2077,10 @@
                         }
                     }
                 });
-                
+
                 const balance = totalIncome - totalExpense;
-                
-                return { 
+
+                return {
                     totalIncome, totalExpense, balance,
                     soldByProduct, designCountsByProduct, colorCountsByProduct, sizeCountsByProduct,
                     paymentMethodCounts, paymentMethodIncome, expenseByCategory,
@@ -1844,13 +2088,13 @@
                     previousMonthIncome, previousMonthExpense
                 };
             }, [transactions]);
-            
+
             // Calcular datos para gráfico de torta
             const pieData = useMemo(() => {
                 const designCounts = analyticsData.designCountsByProduct?.[analyticsProductType] || {};
                 const total = Object.values(designCounts).reduce((sum, val) => sum + val, 0);
                 if (total === 0) return [];
-                
+
                 const colors = {
                     aceitunas: '#22c55e',
                     concha_de_mar: '#06b6d4',
@@ -1863,7 +2107,7 @@
                     saturno_dorado: '#fbbf24',
                     otro: '#64748b'
                 };
-                
+
                 const labels = {
                     aceitunas: 'Aceitunas',
                     concha_de_mar: 'Concha de mar',
@@ -1876,10 +2120,10 @@
                     saturno_dorado: 'Saturno Dorado',
                     otro: 'Otro'
                 };
-                
+
                 let currentAngle = 0;
                 const slices = [];
-                
+
                 Object.entries(designCounts).forEach(([design, count]) => {
                     if (count > 0) {
                         const percentage = (count / total) * 100;
@@ -1896,10 +2140,10 @@
                         currentAngle += angle;
                     }
                 });
-                
+
                 return slices;
             }, [analyticsData, analyticsProductType]);
-            
+
             // Función para crear path de slice de torta
             const createPieSlice = (startAngle, endAngle, radius = 80) => {
                 const start = polarToCartesian(100, 100, radius, endAngle);
@@ -1907,7 +2151,7 @@
                 const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
                 return `M 100 100 L ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y} Z`;
             };
-            
+
             const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
                 const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
                 return {
@@ -1915,7 +2159,7 @@
                     y: centerY + (radius * Math.sin(angleInRadians))
                 };
             };
-            
+
             // Calcular valor del inventario
             const inventoryValue = useMemo(() => {
                 console.log('📊 Recalculando inventoryValue con stockItems:', stockItems.length, 'items');
@@ -1934,17 +2178,17 @@
                     musculosa: {},
                     remera: {}
                 };
-                
+
                 stockItems.forEach(item => {
                     console.log('  📦 Procesando item:', item.name, 'Color:', item.category);
-                    const itemTotal = (item.stock?.s || 0) + (item.stock?.m || 0) + 
-                                     (item.stock?.l || 0) + (item.stock?.xl || 0);
+                    const itemTotal = (item.stock?.s || 0) + (item.stock?.m || 0) +
+                        (item.stock?.l || 0) + (item.stock?.xl || 0);
                     totalUnits += itemTotal;
-                    
+
                     // Contar por color
                     if (item.category && stockByColor.hasOwnProperty(item.category)) {
                         stockByColor[item.category] += itemTotal;
-                        
+
                         // Guardar desglose por talle
                         if (!stockByColorAndSize[item.category]) {
                             stockByColorAndSize[item.category] = { s: 0, m: 0, l: 0, xl: 0 };
@@ -1953,7 +2197,7 @@
                         stockByColorAndSize[item.category].m += (item.stock?.m || 0);
                         stockByColorAndSize[item.category].l += (item.stock?.l || 0);
                         stockByColorAndSize[item.category].xl += (item.stock?.xl || 0);
-                        
+
                         // Guardar tipos de prenda (Musculosa/Remera)
                         if (!productTypesByColor[item.category]) {
                             productTypesByColor[item.category] = [];
@@ -1965,7 +2209,7 @@
                         if (!productTypesByColor[item.category].includes(type)) {
                             productTypesByColor[item.category].push(type);
                         }
-                        
+
                         // Guardar stock por color y talle por tipo de prenda
                         const typeKey = isMusculosa ? 'musculosa' : isRemera ? 'remera' : null;
                         if (typeKey && stockByColorByType[typeKey] && stockByColorByType[typeKey].hasOwnProperty(item.category)) {
@@ -1982,7 +2226,7 @@
                         console.warn('  ⚠️ Color no reconocido o faltante:', item.category);
                     }
                 });
-                
+
                 console.log('📊 Resultado inventoryValue:', { totalUnits, stockByColor, productTypesByColor });
                 const totalValue = totalUnits * 35000;
                 return {
@@ -1995,7 +2239,7 @@
                     stockByColorAndSizeByType
                 };
             }, [stockItems]);
-            
+
             return (
                 <div className="fixed inset-0 z-50 bg-background-light flex flex-col animate-slide-up">
                     <header className="flex items-center justify-between px-6 pt-8 pb-4 bg-background-light/95 backdrop-blur-md sticky top-0 z-20 border-b border-pink-100">
@@ -2005,7 +2249,7 @@
                         <h2 className="text-text-main text-xl font-bold tracking-tight">Analytics</h2>
                         <div className="w-10 h-10"></div>
                     </header>
-                    
+
                     <main ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-32">
                         {/* Tarjetas principales */}
                         <section className="space-y-3">
@@ -2037,7 +2281,7 @@
                                 </div>
                             </div>
                         </section>
-                        
+
                         {/* Total de prendas vendidas */}
                         <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
                             <div className="flex items-center justify-between">
@@ -2078,7 +2322,7 @@
                                 </div>
                             </div>
                         </section>
-                        
+
                         {/* Gráfico de torta */}
                         {pieData.length > 0 && (
                             <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
@@ -2100,7 +2344,7 @@
                                     {pieData.map((slice, index) => (
                                         <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-3 h-3 rounded-full" style={{backgroundColor: slice.color}}></div>
+                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: slice.color }}></div>
                                                 <span className="text-sm font-medium text-text-main">{slice.label}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
@@ -2112,7 +2356,7 @@
                                 </div>
                             </section>
                         )}
-                        
+
                         {/* Gráfico de barras */}
                         {pieData.length > 0 && (
                             <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
@@ -2128,9 +2372,9 @@
                                                     <span className="font-bold text-text-main">{slice.count}</span>
                                                 </div>
                                                 <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                                                    <div 
-                                                        className="h-full rounded-full transition-all duration-500" 
-                                                        style={{width: `${barWidth}%`, backgroundColor: slice.color}}
+                                                    <div
+                                                        className="h-full rounded-full transition-all duration-500"
+                                                        style={{ width: `${barWidth}%`, backgroundColor: slice.color }}
                                                     ></div>
                                                 </div>
                                             </div>
@@ -2139,7 +2383,7 @@
                                 </div>
                             </section>
                         )}
-                        
+
                         {/* Colores más vendidos */}
                         {pieData.length > 0 && (
                             <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
@@ -2163,13 +2407,13 @@
                                                 <div key={color} className="space-y-1.5">
                                                     <div className="flex items-center justify-between text-sm">
                                                         <div className="flex items-center gap-2">
-                                                            <div className={`w-4 h-4 rounded-full ${color === 'blanco' ? 'border border-gray-300' : ''}`} style={{backgroundColor: colorCodes[color]}}></div>
+                                                            <div className={`w-4 h-4 rounded-full ${color === 'blanco' ? 'border border-gray-300' : ''}`} style={{ backgroundColor: colorCodes[color] }}></div>
                                                             <span className="font-medium text-text-main">{colorLabels[color]}</span>
                                                         </div>
                                                         <span className="font-bold text-text-main">{count}</span>
                                                     </div>
                                                     <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                                                        <div className="h-full rounded-full transition-all duration-500" style={{width: `${barWidth}%`, backgroundColor: colorCodes[color]}}></div>
+                                                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${barWidth}%`, backgroundColor: colorCodes[color] }}></div>
                                                     </div>
                                                 </div>
                                             );
@@ -2177,7 +2421,7 @@
                                 </div>
                             </section>
                         )}
-                        
+
                         {/* Talles más vendidos */}
                         {pieData.length > 0 && (
                             <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
@@ -2192,7 +2436,7 @@
                                 </div>
                             </section>
                         )}
-                        
+
                         {/* Métodos de pago */}
                         <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
                             <h3 className="text-text-main font-bold text-xl mb-5">Métodos de Pago</h3>
@@ -2247,7 +2491,7 @@
                                 </div>
                             </div>
                         </section>
-                        
+
                         {/* Distribución de gastos */}
                         <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
                             <h3 className="text-text-main font-bold text-xl mb-6">Distribución de Gastos</h3>
@@ -2272,7 +2516,7 @@
                                                     <span className="font-bold text-text-main text-base">${amount.toLocaleString()}</span>
                                                 </div>
                                                 <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                                                    <div className="h-full rounded-full transition-all duration-500" style={{width: `${barWidth}%`, backgroundColor: categoryColors[category]}}></div>
+                                                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${barWidth}%`, backgroundColor: categoryColors[category] }}></div>
                                                 </div>
                                                 <p className="text-xs text-text-muted text-right">{barWidth.toFixed(1)}% del total</p>
                                             </div>
@@ -2280,7 +2524,7 @@
                                     })}
                             </div>
                         </section>
-                        
+
                         {/* Valor del inventario */}
                         <section className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 shadow-lg text-white">
                             <div className="flex items-center justify-between mb-4">
@@ -2293,7 +2537,7 @@
                             <p className="text-4xl font-bold">${inventoryValue.totalValue.toLocaleString()}</p>
                             <p className="text-xs text-purple-200 mt-2">Precio base: $35,000 por unidad</p>
                         </section>
-                        
+
                         {/* Stock por color */}
                         <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
                             <div className="flex items-center justify-between mb-5">
@@ -2332,7 +2576,7 @@
                                             <div key={color} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`w-6 h-6 rounded-full ${color === 'blanco' ? 'border-2 border-gray-300' : ''}`} style={{backgroundColor: colorCodes[color]}}></div>
+                                                        <div className={`w-6 h-6 rounded-full ${color === 'blanco' ? 'border-2 border-gray-300' : ''}`} style={{ backgroundColor: colorCodes[color] }}></div>
                                                         <div className="flex flex-col">
                                                             <span className="font-bold text-text-main text-lg">{colorLabels[color]}</span>
                                                             {selectedTypeLabel && (
@@ -2369,7 +2613,7 @@
                                     })}
                             </div>
                         </section>
-                        
+
                         {/* Comparativa mensual */}
                         <section className="bg-white rounded-2xl p-6 shadow-soft border border-pink-100">
                             <h3 className="text-text-main font-bold text-xl mb-5">Comparativa Mensual</h3>
@@ -2426,7 +2670,7 @@
                                 </div>
                             </div>
                         </section>
-                        
+
                         {pieData.length === 0 && (
                             <section className="bg-white rounded-2xl p-12 shadow-soft border border-pink-100 text-center">
                                 <span className="material-symbols-outlined text-gray-300 !text-[64px] mb-4">bar_chart</span>
@@ -2447,21 +2691,21 @@
             const [productTypeFilter, setProductTypeFilter] = useState('all');
             const [editingNotes, setEditingNotes] = useState(null);
             const [notesValue, setNotesValue] = useState('');
-            
+
             const formatDate = (timestamp) => {
                 if (!timestamp) return 'Fecha desconocida';
                 const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
-                return date.toLocaleDateString('es-AR', { 
-                    day: '2-digit', 
-                    month: 'short', 
+                return date.toLocaleDateString('es-AR', {
+                    day: '2-digit',
+                    month: 'short',
                     year: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
                 });
             };
-            
+
             const getStatusConfig = (status) => {
-                switch(status) {
+                switch (status) {
                     case 'pendiente':
                         return {
                             label: 'Pendiente',
@@ -2513,9 +2757,9 @@
                         };
                 }
             };
-            
+
             const getPriorityConfig = (priority) => {
-                switch(priority) {
+                switch (priority) {
                     case 'alta':
                         return { label: 'Alta', color: 'bg-red-500' };
                     case 'media':
@@ -2526,27 +2770,27 @@
                         return { label: 'Media', color: 'bg-yellow-500' };
                 }
             };
-            
+
             // Filtrar tareas
             const filteredTasks = useMemo(() => {
                 return tasks.filter(task => {
                     // Filtro por estado
                     const statusMatch = activeFilter === 'all' || task.status === activeFilter;
-                    
+
                     // Filtro por tipo de prenda
                     const typeMatch = productTypeFilter === 'all' || task.productType === productTypeFilter;
-                    
+
                     // Búsqueda
-                    const searchMatch = searchQuery === '' || 
+                    const searchMatch = searchQuery === '' ||
                         task.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         task.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         task.designName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         task.colorName?.toLowerCase().includes(searchQuery.toLowerCase());
-                    
+
                     return statusMatch && typeMatch && searchMatch;
                 });
             }, [tasks, activeFilter, productTypeFilter, searchQuery]);
-            
+
             // Agrupar tareas por estado
             const tasksByStatus = useMemo(() => {
                 const groups = {
@@ -2557,16 +2801,16 @@
                     'empaquetado': [],
                     'entregado': []
                 };
-                
+
                 filteredTasks.forEach(task => {
                     if (groups[task.status]) {
                         groups[task.status].push(task);
                     }
                 });
-                
+
                 return groups;
             }, [filteredTasks]);
-            
+
             const handleStatusChange = (taskId, currentStatus) => {
                 // Ciclo: pendiente -> produccion -> entretela -> lavado -> empaquetado -> entregado
                 const nextStatus = {
@@ -2577,21 +2821,21 @@
                     'empaquetado': 'entregado',
                     'entregado': 'entregado'
                 };
-                
+
                 onUpdateStatus(taskId, nextStatus[currentStatus]);
             };
-            
+
             const handleSaveNotes = (taskId) => {
                 onUpdateNotes(taskId, notesValue);
                 setEditingNotes(null);
                 setNotesValue('');
             };
-            
+
             const handleEditNotes = (task) => {
                 setEditingNotes(task.id);
                 setNotesValue(task.notes || '');
             };
-            
+
             const stats = useMemo(() => {
                 return {
                     total: tasks.length,
@@ -2616,81 +2860,81 @@
                         </div>
                         <div className="w-10 h-10"></div>
                     </header>
-                    
+
                     <main ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-32">
                         {/* Estadísticas rápidas - Filtros */}
                         <section className="grid grid-cols-3 gap-2">
-                            <button 
+                            <button
                                 onClick={() => setActiveFilter(activeFilter === 'pendiente' ? 'all' : 'pendiente')}
                                 className={`rounded-xl p-3 text-center border-2 transition-all cursor-pointer hover:scale-105 ${activeFilter === 'pendiente' ? 'bg-gray-100 border-gray-400 shadow-md' : 'bg-gray-50 border-gray-200'}`}>
                                 <p className="text-xl font-bold text-gray-700">{stats.pendiente}</p>
                                 <p className="text-[10px] text-gray-500 mt-0.5">Pendientes</p>
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setActiveFilter(activeFilter === 'produccion' ? 'all' : 'produccion')}
                                 className={`rounded-xl p-3 text-center border-2 transition-all cursor-pointer hover:scale-105 ${activeFilter === 'produccion' ? 'bg-pink-100 border-pink-400 shadow-md' : 'bg-pink-50 border-pink-200'}`}>
                                 <p className="text-xl font-bold text-primary">{stats.produccion}</p>
                                 <p className="text-[10px] text-primary mt-0.5 font-medium">Producción</p>
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setActiveFilter(activeFilter === 'lavado' ? 'all' : 'lavado')}
                                 className={`rounded-xl p-3 text-center border-2 transition-all cursor-pointer hover:scale-105 ${activeFilter === 'lavado' ? 'bg-cyan-100 border-cyan-400 shadow-md' : 'bg-cyan-50 border-cyan-200'}`}>
                                 <p className="text-xl font-bold text-cyan-600">{stats.lavado}</p>
                                 <p className="text-[10px] text-cyan-600 mt-0.5">Lavado</p>
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setActiveFilter(activeFilter === 'entretela' ? 'all' : 'entretela')}
                                 className={`rounded-xl p-3 text-center border-2 transition-all cursor-pointer hover:scale-105 ${activeFilter === 'entretela' ? 'bg-blue-100 border-blue-400 shadow-md' : 'bg-blue-50 border-blue-200'}`}>
                                 <p className="text-xl font-bold text-blue-600">{stats.entretela}</p>
                                 <p className="text-[10px] text-blue-600 mt-0.5">Entre Tela</p>
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setActiveFilter(activeFilter === 'empaquetado' ? 'all' : 'empaquetado')}
                                 className={`rounded-xl p-3 text-center border-2 transition-all cursor-pointer hover:scale-105 ${activeFilter === 'empaquetado' ? 'bg-orange-100 border-orange-400 shadow-md' : 'bg-orange-50 border-orange-200'}`}>
                                 <p className="text-xl font-bold text-orange-600">{stats.empaquetado}</p>
                                 <p className="text-[10px] text-orange-600 mt-0.5">Empaquetado</p>
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setActiveFilter(activeFilter === 'entregado' ? 'all' : 'entregado')}
                                 className={`rounded-xl p-3 text-center border-2 transition-all cursor-pointer hover:scale-105 ${activeFilter === 'entregado' ? 'bg-green-100 border-green-400 shadow-md' : 'bg-green-50 border-green-200'}`}>
                                 <p className="text-xl font-bold text-green-600">{stats.entregado}</p>
                                 <p className="text-[10px] text-green-500 mt-0.5">Entregados</p>
                             </button>
                         </section>
-                        
+
                         {/* Búsqueda */}
                         <section>
                             <div className="relative">
                                 <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-pink-300">search</span>
-                                <input 
+                                <input
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-none bg-white shadow-soft text-sm text-text-main focus:ring-2 focus:ring-primary/50 placeholder-pink-300/70" 
-                                    placeholder="Buscar tareas..." 
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-none bg-white shadow-soft text-sm text-text-main focus:ring-2 focus:ring-primary/50 placeholder-pink-300/70"
+                                    placeholder="Buscar tareas..."
                                     type="text"
                                 />
                             </div>
                         </section>
-                        
+
                         {/* Filtros de tipo de prenda */}
                         <section className="flex gap-3">
-                            <button 
+                            <button
                                 onClick={() => setProductTypeFilter('all')}
                                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${productTypeFilter === 'all' ? 'bg-primary text-white shadow-md' : 'bg-white text-text-muted border border-pink-100 hover:bg-pink-50'}`}>
                                 Todas
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setProductTypeFilter('musculosa')}
                                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${productTypeFilter === 'musculosa' ? 'bg-primary text-white shadow-md' : 'bg-white text-text-muted border border-pink-100 hover:bg-pink-50'}`}>
                                 Musculosas
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setProductTypeFilter('remera')}
                                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${productTypeFilter === 'remera' ? 'bg-primary text-white shadow-md' : 'bg-white text-text-muted border border-pink-100 hover:bg-pink-50'}`}>
                                 Remeras
                             </button>
                         </section>
-                        
+
                         {/* Lista de tareas */}
                         {filteredTasks.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -2712,14 +2956,14 @@
                                                     azul: '#3b82f6', blanco: '#f3f4f6', chocolate: '#7B3F00',
                                                     gris_petroleo: '#374151', negro: '#000000', verde: '#22c55e'
                                                 };
-                                                
+
                                                 return (
                                                     <div key={task.id} className={`bg-white rounded-2xl shadow-soft p-4 border-2 ${statusConfig.borderColor} transition-all`}>
                                                         <div className="flex items-start justify-between mb-3">
                                                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                                <div 
+                                                                <div
                                                                     className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${task.color === 'blanco' ? 'border-2 border-gray-300' : ''}`}
-                                                                    style={{backgroundColor: colorCodes[task.color] || '#ccc'}}
+                                                                    style={{ backgroundColor: colorCodes[task.color] || '#ccc' }}
                                                                 >
                                                                     {task.color === 'blanco' && <span className="text-gray-600 text-xs font-bold">{task.sizeName}</span>}
                                                                     {task.color !== 'blanco' && <span className="text-white text-xs font-bold">{task.sizeName}</span>}
@@ -2731,18 +2975,18 @@
                                                             </div>
                                                             <div className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.color}`}></div>
                                                         </div>
-                                                        
+
                                                         <div className="flex items-center gap-2 mb-3">
                                                             <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${statusConfig.color}`}>
                                                                 {statusConfig.label}
                                                             </span>
                                                             <span className="text-xs text-text-muted">{formatDate(task.createdAt)}</span>
                                                         </div>
-                                                        
+
                                                         {/* Notas/Comentarios */}
                                                         {editingNotes === task.id ? (
                                                             <div className="mb-3 space-y-2">
-                                                                <textarea 
+                                                                <textarea
                                                                     value={notesValue}
                                                                     onChange={(e) => setNotesValue(e.target.value)}
                                                                     placeholder="Ej: Musculosa de Sofi, usar hilo rojo..."
@@ -2751,12 +2995,12 @@
                                                                     autoFocus
                                                                 />
                                                                 <div className="flex gap-2">
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleSaveNotes(task.id)}
                                                                         className="flex-1 bg-primary text-white py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-primary-dark transition-colors">
                                                                         Guardar
                                                                     </button>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => { setEditingNotes(null); setNotesValue(''); }}
                                                                         className="flex-1 bg-gray-100 text-text-muted py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors">
                                                                         Cancelar
@@ -2773,7 +3017,7 @@
                                                                         </p>
                                                                         <p className="text-sm text-yellow-900 italic">"{task.notes}"</p>
                                                                     </div>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleEditNotes(task)}
                                                                         className="text-yellow-600 hover:text-yellow-700 shrink-0">
                                                                         <span className="material-symbols-outlined !text-[18px]">edit</span>
@@ -2781,22 +3025,22 @@
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleEditNotes(task)}
                                                                 className="mb-3 w-full py-2 px-3 rounded-xl border-2 border-dashed border-gray-300 text-gray-400 hover:border-pink-300 hover:text-primary hover:bg-pink-50/30 transition-all flex items-center justify-center gap-2 text-sm font-medium">
                                                                 <span className="material-symbols-outlined !text-[18px]">add_notes</span>
                                                                 <span>Agregar nota</span>
                                                             </button>
                                                         )}
-                                                        
+
                                                         <div className="flex gap-2">
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleStatusChange(task.id, task.status)}
                                                                 className="flex-1 bg-cyan-50 text-cyan-600 font-semibold py-2.5 px-4 rounded-xl border border-cyan-200 active:scale-[0.98] transition-all hover:bg-cyan-100 flex items-center justify-center gap-2">
                                                                 <span className="material-symbols-outlined !text-[18px]">water_drop</span>
                                                                 <span className="text-sm">A Lavado</span>
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => {
                                                                     if (confirm('¿Estás segura de que quieres eliminar esta tarea?')) {
                                                                         onDeleteTask(task.id);
@@ -2812,7 +3056,7 @@
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {/* Tareas Pendientes */}
                                 {(activeFilter === 'all' || activeFilter === 'pendiente') && tasksByStatus.pendiente.length > 0 && (
                                     <div>
@@ -2825,14 +3069,14 @@
                                                     azul: '#3b82f6', blanco: '#f3f4f6', chocolate: '#7B3F00',
                                                     gris_petroleo: '#374151', negro: '#000000', verde: '#22c55e'
                                                 };
-                                                
+
                                                 return (
                                                     <div key={task.id} className={`bg-white rounded-2xl shadow-soft p-4 border ${statusConfig.borderColor}`}>
                                                         <div className="flex items-start justify-between mb-3">
                                                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                                <div 
+                                                                <div
                                                                     className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${task.color === 'blanco' ? 'border-2 border-gray-300' : ''}`}
-                                                                    style={{backgroundColor: colorCodes[task.color] || '#ccc'}}
+                                                                    style={{ backgroundColor: colorCodes[task.color] || '#ccc' }}
                                                                 >
                                                                     {task.color === 'blanco' && <span className="text-gray-600 text-xs font-bold">{task.sizeName}</span>}
                                                                     {task.color !== 'blanco' && <span className="text-white text-xs font-bold">{task.sizeName}</span>}
@@ -2844,18 +3088,18 @@
                                                             </div>
                                                             <div className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.color}`}></div>
                                                         </div>
-                                                        
+
                                                         <div className="flex items-center gap-2 mb-3">
                                                             <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${statusConfig.color}`}>
                                                                 {statusConfig.label}
                                                             </span>
                                                             <span className="text-xs text-text-muted">{formatDate(task.createdAt)}</span>
                                                         </div>
-                                                        
+
                                                         {/* Notas/Comentarios */}
                                                         {editingNotes === task.id ? (
                                                             <div className="mb-3 space-y-2">
-                                                                <textarea 
+                                                                <textarea
                                                                     value={notesValue}
                                                                     onChange={(e) => setNotesValue(e.target.value)}
                                                                     placeholder="Ej: Musculosa de Sofi, usar hilo rojo..."
@@ -2864,12 +3108,12 @@
                                                                     autoFocus
                                                                 />
                                                                 <div className="flex gap-2">
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleSaveNotes(task.id)}
                                                                         className="flex-1 bg-gray-500 text-white py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-gray-600 transition-colors">
                                                                         Guardar
                                                                     </button>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => { setEditingNotes(null); setNotesValue(''); }}
                                                                         className="flex-1 bg-gray-100 text-text-muted py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors">
                                                                         Cancelar
@@ -2886,7 +3130,7 @@
                                                                         </p>
                                                                         <p className="text-sm text-yellow-900 italic">"{task.notes}"</p>
                                                                     </div>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleEditNotes(task)}
                                                                         className="text-yellow-600 hover:text-yellow-700 shrink-0">
                                                                         <span className="material-symbols-outlined !text-[18px]">edit</span>
@@ -2894,22 +3138,22 @@
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleEditNotes(task)}
                                                                 className="mb-3 w-full py-2 px-3 rounded-xl border-2 border-dashed border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all flex items-center justify-center gap-2 text-sm font-medium">
                                                                 <span className="material-symbols-outlined !text-[18px]">add_notes</span>
                                                                 <span>Agregar nota</span>
                                                             </button>
                                                         )}
-                                                        
+
                                                         <div className="flex gap-2">
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleStatusChange(task.id, task.status)}
                                                                 className="flex-1 bg-pink-50 text-primary font-semibold py-2.5 px-4 rounded-xl border border-pink-200 active:scale-[0.98] transition-all hover:bg-pink-100 flex items-center justify-center gap-2">
                                                                 <span className="material-symbols-outlined !text-[18px]">construction</span>
                                                                 <span className="text-sm">Producción</span>
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => {
                                                                     if (confirm('¿Estás segura de que quieres eliminar esta tarea?')) {
                                                                         onDeleteTask(task.id);
@@ -2925,7 +3169,7 @@
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {/* Tareas Lavado */}
                                 {(activeFilter === 'all' || activeFilter === 'lavado') && tasksByStatus.lavado.length > 0 && (
                                     <div>
@@ -2938,14 +3182,14 @@
                                                     azul: '#3b82f6', blanco: '#f3f4f6', chocolate: '#7B3F00',
                                                     gris_petroleo: '#374151', negro: '#000000', verde: '#22c55e'
                                                 };
-                                                
+
                                                 return (
                                                     <div key={task.id} className={`bg-white rounded-2xl shadow-soft p-4 border-2 ${statusConfig.borderColor} transition-all`}>
                                                         <div className="flex items-start justify-between mb-3">
                                                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                                <div 
+                                                                <div
                                                                     className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${task.color === 'blanco' ? 'border-2 border-gray-300' : ''}`}
-                                                                    style={{backgroundColor: colorCodes[task.color] || '#ccc'}}
+                                                                    style={{ backgroundColor: colorCodes[task.color] || '#ccc' }}
                                                                 >
                                                                     {task.color === 'blanco' && <span className="text-gray-600 text-xs font-bold">{task.sizeName}</span>}
                                                                     {task.color !== 'blanco' && <span className="text-white text-xs font-bold">{task.sizeName}</span>}
@@ -2957,18 +3201,18 @@
                                                             </div>
                                                             <div className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.color}`}></div>
                                                         </div>
-                                                        
+
                                                         <div className="flex items-center gap-2 mb-3">
                                                             <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${statusConfig.color}`}>
                                                                 {statusConfig.label}
                                                             </span>
                                                             <span className="text-xs text-text-muted">{formatDate(task.createdAt)}</span>
                                                         </div>
-                                                        
+
                                                         {/* Notas/Comentarios */}
                                                         {editingNotes === task.id ? (
                                                             <div className="mb-3 space-y-2">
-                                                                <textarea 
+                                                                <textarea
                                                                     value={notesValue}
                                                                     onChange={(e) => setNotesValue(e.target.value)}
                                                                     placeholder="Ej: Musculosa de Sofi, usar hilo rojo..."
@@ -2977,12 +3221,12 @@
                                                                     autoFocus
                                                                 />
                                                                 <div className="flex gap-2">
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleSaveNotes(task.id)}
                                                                         className="flex-1 bg-cyan-500 text-white py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-cyan-600 transition-colors">
                                                                         Guardar
                                                                     </button>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => { setEditingNotes(null); setNotesValue(''); }}
                                                                         className="flex-1 bg-gray-100 text-text-muted py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors">
                                                                         Cancelar
@@ -2999,7 +3243,7 @@
                                                                         </p>
                                                                         <p className="text-sm text-yellow-900 italic">"{task.notes}"</p>
                                                                     </div>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleEditNotes(task)}
                                                                         className="text-yellow-600 hover:text-yellow-700 shrink-0">
                                                                         <span className="material-symbols-outlined !text-[18px]">edit</span>
@@ -3007,22 +3251,22 @@
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleEditNotes(task)}
                                                                 className="mb-3 w-full py-2 px-3 rounded-xl border-2 border-dashed border-cyan-300 text-cyan-400 hover:border-cyan-400 hover:text-cyan-600 hover:bg-cyan-50/30 transition-all flex items-center justify-center gap-2 text-sm font-medium">
                                                                 <span className="material-symbols-outlined !text-[18px]">add_notes</span>
                                                                 <span>Agregar nota</span>
                                                             </button>
                                                         )}
-                                                        
+
                                                         <div className="flex gap-2">
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleStatusChange(task.id, task.status)}
                                                                 className="flex-1 bg-blue-50 text-blue-600 font-semibold py-2.5 px-4 rounded-xl border border-blue-200 active:scale-[0.98] transition-all hover:bg-blue-100 flex items-center justify-center gap-2">
                                                                 <span className="material-symbols-outlined !text-[18px]">checkroom</span>
                                                                 <span className="text-sm">A Entre Tela</span>
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => {
                                                                     if (confirm('¿Estás segura de que quieres eliminar esta tarea?')) {
                                                                         onDeleteTask(task.id);
@@ -3038,7 +3282,7 @@
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {/* Tareas Entre Tela */}
                                 {(activeFilter === 'all' || activeFilter === 'entretela') && tasksByStatus.entretela.length > 0 && (
                                     <div>
@@ -3051,14 +3295,14 @@
                                                     azul: '#3b82f6', blanco: '#f3f4f6', chocolate: '#7B3F00',
                                                     gris_petroleo: '#374151', negro: '#000000', verde: '#22c55e'
                                                 };
-                                                
+
                                                 return (
                                                     <div key={task.id} className={`bg-white rounded-2xl shadow-soft p-4 border-2 ${statusConfig.borderColor} transition-all`}>
                                                         <div className="flex items-start justify-between mb-3">
                                                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                                <div 
+                                                                <div
                                                                     className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${task.color === 'blanco' ? 'border-2 border-gray-300' : ''}`}
-                                                                    style={{backgroundColor: colorCodes[task.color] || '#ccc'}}
+                                                                    style={{ backgroundColor: colorCodes[task.color] || '#ccc' }}
                                                                 >
                                                                     {task.color === 'blanco' && <span className="text-gray-600 text-xs font-bold">{task.sizeName}</span>}
                                                                     {task.color !== 'blanco' && <span className="text-white text-xs font-bold">{task.sizeName}</span>}
@@ -3070,18 +3314,18 @@
                                                             </div>
                                                             <div className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.color}`}></div>
                                                         </div>
-                                                        
+
                                                         <div className="flex items-center gap-2 mb-3">
                                                             <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${statusConfig.color}`}>
                                                                 {statusConfig.label}
                                                             </span>
                                                             <span className="text-xs text-text-muted">{formatDate(task.createdAt)}</span>
                                                         </div>
-                                                        
+
                                                         {/* Notas/Comentarios */}
                                                         {editingNotes === task.id ? (
                                                             <div className="mb-3 space-y-2">
-                                                                <textarea 
+                                                                <textarea
                                                                     value={notesValue}
                                                                     onChange={(e) => setNotesValue(e.target.value)}
                                                                     placeholder="Ej: Musculosa de Sofi, usar hilo rojo..."
@@ -3090,12 +3334,12 @@
                                                                     autoFocus
                                                                 />
                                                                 <div className="flex gap-2">
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleSaveNotes(task.id)}
                                                                         className="flex-1 bg-blue-500 text-white py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-blue-600 transition-colors">
                                                                         Guardar
                                                                     </button>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => { setEditingNotes(null); setNotesValue(''); }}
                                                                         className="flex-1 bg-gray-100 text-text-muted py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors">
                                                                         Cancelar
@@ -3112,7 +3356,7 @@
                                                                         </p>
                                                                         <p className="text-sm text-yellow-900 italic">"{task.notes}"</p>
                                                                     </div>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleEditNotes(task)}
                                                                         className="text-yellow-600 hover:text-yellow-700 shrink-0">
                                                                         <span className="material-symbols-outlined !text-[18px]">edit</span>
@@ -3120,22 +3364,22 @@
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleEditNotes(task)}
                                                                 className="mb-3 w-full py-2 px-3 rounded-xl border-2 border-dashed border-blue-300 text-blue-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/30 transition-all flex items-center justify-center gap-2 text-sm font-medium">
                                                                 <span className="material-symbols-outlined !text-[18px]">add_notes</span>
                                                                 <span>Agregar nota</span>
                                                             </button>
                                                         )}
-                                                        
+
                                                         <div className="flex gap-2">
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleStatusChange(task.id, task.status)}
                                                                 className="flex-1 bg-orange-50 text-orange-600 font-semibold py-2.5 px-4 rounded-xl border border-orange-200 active:scale-[0.98] transition-all hover:bg-orange-100 flex items-center justify-center gap-2">
                                                                 <span className="material-symbols-outlined !text-[18px]">package</span>
                                                                 <span className="text-sm">Empaquetar</span>
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => {
                                                                     if (confirm('¿Estás segura de que quieres eliminar esta tarea?')) {
                                                                         onDeleteTask(task.id);
@@ -3151,7 +3395,7 @@
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {/* Tareas Empaquetado */}
                                 {(activeFilter === 'all' || activeFilter === 'empaquetado') && tasksByStatus.empaquetado.length > 0 && (
                                     <div>
@@ -3164,14 +3408,14 @@
                                                     azul: '#3b82f6', blanco: '#f3f4f6', chocolate: '#7B3F00',
                                                     gris_petroleo: '#374151', negro: '#000000', verde: '#22c55e'
                                                 };
-                                                
+
                                                 return (
                                                     <div key={task.id} className={`bg-white rounded-2xl shadow-soft p-4 border-2 ${statusConfig.borderColor} transition-all`}>
                                                         <div className="flex items-start justify-between mb-3">
                                                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                                <div 
+                                                                <div
                                                                     className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${task.color === 'blanco' ? 'border-2 border-gray-300' : ''}`}
-                                                                    style={{backgroundColor: colorCodes[task.color] || '#ccc'}}
+                                                                    style={{ backgroundColor: colorCodes[task.color] || '#ccc' }}
                                                                 >
                                                                     {task.color === 'blanco' && <span className="text-gray-600 text-xs font-bold">{task.sizeName}</span>}
                                                                     {task.color !== 'blanco' && <span className="text-white text-xs font-bold">{task.sizeName}</span>}
@@ -3183,18 +3427,18 @@
                                                             </div>
                                                             <div className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.color}`}></div>
                                                         </div>
-                                                        
+
                                                         <div className="flex items-center gap-2 mb-3">
                                                             <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${statusConfig.color}`}>
                                                                 {statusConfig.label}
                                                             </span>
                                                             <span className="text-xs text-text-muted">{formatDate(task.createdAt)}</span>
                                                         </div>
-                                                        
+
                                                         {/* Notas/Comentarios */}
                                                         {editingNotes === task.id ? (
                                                             <div className="mb-3 space-y-2">
-                                                                <textarea 
+                                                                <textarea
                                                                     value={notesValue}
                                                                     onChange={(e) => setNotesValue(e.target.value)}
                                                                     placeholder="Ej: Musculosa de Sofi, usar hilo rojo..."
@@ -3203,12 +3447,12 @@
                                                                     autoFocus
                                                                 />
                                                                 <div className="flex gap-2">
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleSaveNotes(task.id)}
                                                                         className="flex-1 bg-orange-500 text-white py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-orange-600 transition-colors">
                                                                         Guardar
                                                                     </button>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => { setEditingNotes(null); setNotesValue(''); }}
                                                                         className="flex-1 bg-gray-100 text-text-muted py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors">
                                                                         Cancelar
@@ -3225,7 +3469,7 @@
                                                                         </p>
                                                                         <p className="text-sm text-yellow-900 italic">"{task.notes}"</p>
                                                                     </div>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleEditNotes(task)}
                                                                         className="text-yellow-600 hover:text-yellow-700 shrink-0">
                                                                         <span className="material-symbols-outlined !text-[18px]">edit</span>
@@ -3233,22 +3477,22 @@
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleEditNotes(task)}
                                                                 className="mb-3 w-full py-2 px-3 rounded-xl border-2 border-dashed border-orange-300 text-orange-400 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50/30 transition-all flex items-center justify-center gap-2 text-sm font-medium">
                                                                 <span className="material-symbols-outlined !text-[18px]">add_notes</span>
                                                                 <span>Agregar nota</span>
                                                             </button>
                                                         )}
-                                                        
+
                                                         <div className="flex gap-2">
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleStatusChange(task.id, task.status)}
                                                                 className="flex-1 bg-green-50 text-green-600 font-semibold py-2.5 px-4 rounded-xl border border-green-200 active:scale-[0.98] transition-all hover:bg-green-100 flex items-center justify-center gap-2">
                                                                 <span className="material-symbols-outlined !text-[18px]">check_circle</span>
                                                                 <span className="text-sm">Entregar</span>
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => {
                                                                     if (confirm('¿Estás segura de que quieres eliminar esta tarea?')) {
                                                                         onDeleteTask(task.id);
@@ -3264,7 +3508,7 @@
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {/* Tareas Entregadas */}
                                 {(activeFilter === 'all' || activeFilter === 'entregado') && tasksByStatus.entregado.length > 0 && (
                                     <div>
@@ -3276,14 +3520,14 @@
                                                     azul: '#3b82f6', blanco: '#f3f4f6', chocolate: '#7B3F00',
                                                     gris_petroleo: '#374151', negro: '#000000', verde: '#22c55e'
                                                 };
-                                                
+
                                                 return (
                                                     <div key={task.id} className={`bg-white rounded-2xl shadow-soft p-4 border ${statusConfig.borderColor} opacity-75`}>
                                                         <div className="flex items-start justify-between mb-3">
                                                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                                <div 
+                                                                <div
                                                                     className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${task.color === 'blanco' ? 'border-2 border-gray-300' : ''}`}
-                                                                    style={{backgroundColor: colorCodes[task.color] || '#ccc'}}
+                                                                    style={{ backgroundColor: colorCodes[task.color] || '#ccc' }}
                                                                 >
                                                                     {task.color === 'blanco' && <span className="text-gray-600 text-xs font-bold">{task.sizeName}</span>}
                                                                     {task.color !== 'blanco' && <span className="text-white text-xs font-bold">{task.sizeName}</span>}
@@ -3295,7 +3539,7 @@
                                                             </div>
                                                             <span className="material-symbols-outlined text-green-500 !text-[24px]">check_circle</span>
                                                         </div>
-                                                        
+
                                                         {/* Mostrar notas si existen */}
                                                         {task.notes && (
                                                             <div className="mb-3 bg-yellow-50/50 border border-yellow-200/50 rounded-xl p-3">
@@ -3306,12 +3550,12 @@
                                                                 <p className="text-sm text-yellow-900/70 italic line-through">"{task.notes}"</p>
                                                             </div>
                                                         )}
-                                                        
+
                                                         <div className="flex items-center justify-between">
                                                             <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${statusConfig.color}`}>
                                                                 {statusConfig.label}
                                                             </span>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => {
                                                                     if (confirm('¿Eliminar esta tarea completada?')) {
                                                                         onDeleteTask(task.id);
@@ -3349,7 +3593,7 @@
             const isIncome = data.type === 'income';
             return (
                 <div onClick={onClick} className="group relative flex items-center justify-between gap-4 rounded-2xl bg-white p-3 transition-colors hover:bg-primary-soft cursor-pointer">
-                    <div className="flex items-center gap-4"><div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isIncome ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}><span className="material-symbols-outlined" style={{fontSize: '24px'}}>{data.icon}</span></div><div className="flex flex-col justify-center min-w-0 flex-1"><p className="text-base font-semibold text-text-main line-clamp-2">{data.title}</p><p className="text-sm text-gray-500 line-clamp-1">{data.subtitle}</p></div></div>
+                    <div className="flex items-center gap-4"><div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isIncome ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}><span className="material-symbols-outlined" style={{ fontSize: '24px' }}>{data.icon}</span></div><div className="flex flex-col justify-center min-w-0 flex-1"><p className="text-base font-semibold text-text-main line-clamp-2">{data.title}</p><p className="text-sm text-gray-500 line-clamp-1">{data.subtitle}</p></div></div>
                     <div className="shrink-0 flex flex-col items-end"><p className={`text-base font-bold ${isIncome ? 'text-primary' : 'text-gray-900'}`}>{isIncome ? '+' : '-'} ${data.amount.toLocaleString()}</p><span className="material-symbols-outlined text-gray-300 text-sm mt-1 group-hover:text-primary">edit</span></div>
                 </div>
             );
@@ -3371,19 +3615,19 @@
             const [paymentMethod, setPaymentMethod] = useState(initialData?.paymentMethod || '');
             const [desc, setDesc] = useState(initialData?.title === 'Movimiento' ? '' : initialData?.title || '');
             const [date, setDate] = useState(initialData?.fullDate || getLocalDateISO());
-            
+
             // Estados para venta online
             const [quantity, setQuantity] = useState(initialData?.quantity || 1);
             const [products, setProducts] = useState(
-                initialData?.products || [{ 
-                    productType: '', 
-                    musculosaDesign: '', 
-                    musculosaCustomDesign: '', 
-                    musculosaColor: '', 
-                    musculosaSize: '' 
+                initialData?.products || [{
+                    productType: '',
+                    musculosaDesign: '',
+                    musculosaCustomDesign: '',
+                    musculosaColor: '',
+                    musculosaSize: ''
                 }]
             );
-            
+
             // Actualizar cantidad de productos cuando cambia quantity
             useEffect(() => {
                 if (category === 'online' && quantity && Number.isInteger(quantity)) {
@@ -3391,12 +3635,12 @@
                     if (quantity > products.length) {
                         // Agregar más productos
                         for (let i = products.length; i < quantity; i++) {
-                            newProducts.push({ 
-                                productType: '', 
-                                musculosaDesign: '', 
-                                musculosaCustomDesign: '', 
-                                musculosaColor: '', 
-                                musculosaSize: '' 
+                            newProducts.push({
+                                productType: '',
+                                musculosaDesign: '',
+                                musculosaCustomDesign: '',
+                                musculosaColor: '',
+                                musculosaSize: ''
                             });
                         }
                     } else if (quantity < products.length) {
@@ -3406,25 +3650,25 @@
                     setProducts(newProducts);
                 }
             }, [quantity, category]);
-            
+
             // Función para actualizar un producto específico
             const updateProduct = (index, field, value) => {
                 const newProducts = [...products];
                 newProducts[index] = { ...newProducts[index], [field]: value };
                 setProducts(newProducts);
             };
-            
+
             const handleSubmit = (e) => {
                 e.preventDefault();
                 if (!amount || !category) { alert('Completa los campos requeridos'); return; }
-                
+
                 // Validar campos de venta online
                 if (category === 'online') {
                     if (!quantity || quantity < 1 || !Number.isInteger(quantity)) {
                         alert('Por favor ingresa una cantidad válida (mínimo 1)');
                         return;
                     }
-                    
+
                     // Validar cada producto
                     for (let i = 0; i < quantity; i++) {
                         const product = products[i];
@@ -3442,9 +3686,9 @@
                         }
                     }
                 }
-                
+
                 const selectedCat = TRANSACTION_CATEGORIES.find(c => c.id === category);
-                
+
                 // Construir título automático para venta online
                 let finalTitle = desc || 'Movimiento';
                 if (category === 'online' && quantity > 0) {
@@ -3461,29 +3705,29 @@
                         if (desc) finalTitle += ` - ${desc}`;
                     }
                 }
-                
-                const newTx = { 
-                    id: initialData?.id || Date.now(), 
-                    type, 
-                    title: finalTitle, 
-                    subtitle: selectedCat?.name, 
-                    amount: parseFloat(amount), 
-                    date: 'Hoy', 
-                    fullDate: date, 
-                    icon: selectedCat?.icon || 'star', 
-                    category, 
+
+                const newTx = {
+                    id: initialData?.id || Date.now(),
+                    type,
+                    title: finalTitle,
+                    subtitle: selectedCat?.name,
+                    amount: parseFloat(amount),
+                    date: 'Hoy',
+                    fullDate: date,
+                    icon: selectedCat?.icon || 'star',
+                    category,
                     paymentMethod: paymentMethod || 'transferencia'
                 };
-                
+
                 // Agregar información de productos para venta online
                 if (category === 'online') {
                     newTx.quantity = quantity;
                     newTx.products = products.slice(0, quantity);
                 }
-                
+
                 onSave(newTx);
             };
-            
+
             const isEditing = !!initialData;
             const isExpense = type === 'expense';
 
@@ -3508,16 +3752,16 @@
                                 <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={`w-auto max-w-[250px] bg-transparent text-center text-5xl font-bold placeholder-primary/30 focus:outline-none border-none p-0 ${isExpense ? 'text-primary' : 'text-green-600'}`} placeholder="0" autoFocus />
                             </div>
                             <div className="bg-white rounded-2xl shadow-soft p-6 space-y-5 border border-pink-50">
-                                <div className="space-y-1.5"><label className="text-sm font-medium text-text-main ml-1">Fecha</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary sm:text-sm"/></div>
-                                
+                                <div className="space-y-1.5"><label className="text-sm font-medium text-text-main ml-1">Fecha</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary sm:text-sm" /></div>
+
                                 {category === 'online' && (
                                     <>
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-medium text-text-main ml-1">Cantidad de Prendas <span className="text-primary">*</span></label>
-                                            <input 
-                                                type="number" 
-                                                min="1" 
-                                                value={quantity} 
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={quantity}
                                                 onChange={(e) => {
                                                     const val = e.target.value;
                                                     if (val === '') {
@@ -3528,27 +3772,27 @@
                                                             setQuantity(num);
                                                         }
                                                     }
-                                                }} 
-                                                className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary sm:text-sm" 
-                                                placeholder="Ej: 2" 
+                                                }}
+                                                className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary sm:text-sm"
+                                                placeholder="Ej: 2"
                                             />
                                             <p className="text-xs text-text-muted ml-1">Si vendes más de una prenda, completa los datos de cada una</p>
                                         </div>
-                                        
+
                                         <div className="h-px bg-gradient-to-r from-transparent via-pink-200 to-transparent my-2"></div>
-                                        
+
                                         {/* Renderizar campos para cada producto */}
                                         {quantity && Number.isInteger(quantity) && quantity > 0 && Array.from({ length: quantity }).map((_, index) => {
                                             const product = products[index] || {};
                                             return (
                                                 <div key={index} className="space-y-4 p-4 bg-pink-50/50 rounded-xl border border-pink-100">
                                                     <h3 className="text-sm font-bold text-primary">Prenda {index + 1}</h3>
-                                                    
+
                                                     <div className="space-y-1.5">
                                                         <label className="text-sm font-medium text-text-main ml-1">Tipo de Prenda <span className="text-primary">*</span></label>
-                                                        <select 
-                                                            value={product.productType || ''} 
-                                                            onChange={(e) => updateProduct(index, 'productType', e.target.value)} 
+                                                        <select
+                                                            value={product.productType || ''}
+                                                            onChange={(e) => updateProduct(index, 'productType', e.target.value)}
                                                             className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary focus:border-primary sm:text-sm">
                                                             <option value="">Seleccionar tipo...</option>
                                                             {PRODUCT_TYPES.map((type) => (
@@ -3556,12 +3800,12 @@
                                                             ))}
                                                         </select>
                                                     </div>
-                                                    
+
                                                     <div className="space-y-1.5">
                                                         <label className="text-sm font-medium text-text-main ml-1">Diseño <span className="text-primary">*</span></label>
-                                                        <select 
-                                                            value={product.musculosaDesign || ''} 
-                                                            onChange={(e) => updateProduct(index, 'musculosaDesign', e.target.value)} 
+                                                        <select
+                                                            value={product.musculosaDesign || ''}
+                                                            onChange={(e) => updateProduct(index, 'musculosaDesign', e.target.value)}
                                                             className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary focus:border-primary sm:text-sm">
                                                             <option value="">Seleccionar diseño...</option>
                                                             {MUSCULOSA_DESIGNS.map((design) => (
@@ -3569,25 +3813,25 @@
                                                             ))}
                                                         </select>
                                                     </div>
-                                                    
+
                                                     {product.musculosaDesign === 'otro' && (
                                                         <div className="space-y-1.5">
                                                             <label className="text-sm font-medium text-text-main ml-1">Especificar diseño <span className="text-primary">*</span></label>
-                                                            <input 
-                                                                type="text" 
-                                                                value={product.musculosaCustomDesign || ''} 
-                                                                onChange={(e) => updateProduct(index, 'musculosaCustomDesign', e.target.value)} 
-                                                                className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary sm:text-sm" 
-                                                                placeholder="Ej: Pato, Estrella..." 
+                                                            <input
+                                                                type="text"
+                                                                value={product.musculosaCustomDesign || ''}
+                                                                onChange={(e) => updateProduct(index, 'musculosaCustomDesign', e.target.value)}
+                                                                className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary sm:text-sm"
+                                                                placeholder="Ej: Pato, Estrella..."
                                                             />
                                                         </div>
                                                     )}
-                                                    
+
                                                     <div className="space-y-1.5">
                                                         <label className="text-sm font-medium text-text-main ml-1">Color <span className="text-primary">*</span></label>
-                                                        <select 
-                                                            value={product.musculosaColor || ''} 
-                                                            onChange={(e) => updateProduct(index, 'musculosaColor', e.target.value)} 
+                                                        <select
+                                                            value={product.musculosaColor || ''}
+                                                            onChange={(e) => updateProduct(index, 'musculosaColor', e.target.value)}
                                                             className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary focus:border-primary sm:text-sm">
                                                             <option value="">Seleccionar color...</option>
                                                             {MUSCULOSA_COLORS.map((color) => (
@@ -3595,12 +3839,12 @@
                                                             ))}
                                                         </select>
                                                     </div>
-                                                    
+
                                                     <div className="space-y-1.5">
                                                         <label className="text-sm font-medium text-text-main ml-1">Talle <span className="text-primary">*</span></label>
-                                                        <select 
-                                                            value={product.musculosaSize || ''} 
-                                                            onChange={(e) => updateProduct(index, 'musculosaSize', e.target.value)} 
+                                                        <select
+                                                            value={product.musculosaSize || ''}
+                                                            onChange={(e) => updateProduct(index, 'musculosaSize', e.target.value)}
                                                             className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-white text-text-main focus:ring-primary focus:border-primary sm:text-sm">
                                                             <option value="">Seleccionar talle...</option>
                                                             {MUSCULOSA_SIZES.map((size) => (
@@ -3611,11 +3855,11 @@
                                                 </div>
                                             );
                                         })}
-                                        
+
                                         <div className="h-px bg-gradient-to-r from-transparent via-pink-200 to-transparent my-2"></div>
                                     </>
                                 )}
-                                
+
                                 <div className="space-y-1.5"><label className="text-sm font-medium text-text-main ml-1">Descripción {category !== 'online' && '(Opcional)'}</label><input type="text" value={desc} onChange={(e) => setDesc(e.target.value)} className="block w-full pl-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary sm:text-sm" placeholder="Detalle adicional..." /></div>
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-text-main ml-1">Método de Pago</label>
@@ -3628,7 +3872,7 @@
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-text-main ml-1">Categoría</label>
-                                    <div className="grid grid-cols-2 gap-3 mt-2">{TRANSACTION_CATEGORIES.map((cat) => (<label key={cat.id} className="cursor-pointer relative group"><input type="radio" name="category" className="peer sr-only" checked={category === cat.id} onChange={() => setCategory(cat.id)}/><div className="flex flex-col items-center justify-center p-3 rounded-xl border border-pink-100 bg-gray-50 peer-checked:bg-pink-50 peer-checked:border-primary peer-checked:text-primary transition-all"><span className={`material-symbols-outlined mb-1 ${category === cat.id ? 'text-primary' : 'text-gray-400'}`}>{cat.icon}</span><span className="text-xs font-medium">{cat.name}</span></div></label>))}</div>
+                                    <div className="grid grid-cols-2 gap-3 mt-2">{TRANSACTION_CATEGORIES.map((cat) => (<label key={cat.id} className="cursor-pointer relative group"><input type="radio" name="category" className="peer sr-only" checked={category === cat.id} onChange={() => setCategory(cat.id)} /><div className="flex flex-col items-center justify-center p-3 rounded-xl border border-pink-100 bg-gray-50 peer-checked:bg-pink-50 peer-checked:border-primary peer-checked:text-primary transition-all"><span className={`material-symbols-outlined mb-1 ${category === cat.id ? 'text-primary' : 'text-gray-400'}`}>{cat.icon}</span><span className="text-xs font-medium">{cat.name}</span></div></label>))}</div>
                                 </div>
                             </div>
                             <div className="flex flex-col gap-3">
@@ -3645,4 +3889,5 @@
         root.render(<App />);
     </script>
 </body>
+
 </html>
