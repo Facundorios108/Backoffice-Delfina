@@ -286,6 +286,7 @@
             const [productionTasks, setProductionTasks] = useState([]);
             const [showModal, setShowModal] = useState(false);
             const [activeTab, setActiveTab] = useState('dashboard');
+            const [initialTxFilters, setInitialTxFilters] = useState({ type: 'all', date: 'all' });
             const [isLoading, setIsLoading] = useState(true);
 
             // Modales separados
@@ -832,9 +833,9 @@
                     {activeTab === 'stock' ? (
                         <StockView items={stockItems} onItemClick={openEditStock} onOpenHistory={() => setShowStockHistoryModal(true)} />
                     ) : activeTab === 'movimientos' ? (
-                        <TransactionsView transactions={transactions} totals={financialStats} onTransactionClick={openEditTransaction} />
+                        <TransactionsView transactions={transactions} totals={financialStats} onTransactionClick={openEditTransaction} initialFilterType={initialTxFilters.type} initialFilterDate={initialTxFilters.date} />
                     ) : (
-                        <DashboardView stats={financialStats} transactions={transactions} onTransactionClick={openEditTransaction} onViewAll={() => setActiveTab('movimientos')} onOpenAnalytics={() => setShowAnalyticsModal(true)} onOpenProductionTasks={() => setShowProductionTasksModal(true)} productionTasks={productionTasks} />
+                        <DashboardView stats={financialStats} transactions={transactions} onTransactionClick={openEditTransaction} onViewAll={() => { setInitialTxFilters({ type: 'all', date: 'all' }); setActiveTab('movimientos'); }} onOpenAnalytics={() => setShowAnalyticsModal(true)} onOpenProductionTasks={() => setShowProductionTasksModal(true)} productionTasks={productionTasks} onNavigateToTransactions={(filters) => { setInitialTxFilters(filters); setActiveTab('movimientos'); }} />
                     )}
 
                     <button onClick={handleFabClick} className="fixed bottom-24 right-6 h-14 w-14 rounded-full bg-primary text-white shadow-lg shadow-pink-500/40 flex items-center justify-center z-30 hover:bg-primary-dark transition-colors active:scale-95 group">
@@ -844,7 +845,7 @@
                     <nav className="fixed bottom-0 w-full bg-white border-t border-gray-100 pb-safe pt-2 px-6 z-40">
                         <div className="flex justify-around items-end h-16 pb-2">
                             <NavButton icon="dashboard" label="Dashboard" isActive={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-                            <NavButton icon="receipt_long" label="Movimientos" isActive={activeTab === 'movimientos'} onClick={() => setActiveTab('movimientos')} />
+                            <NavButton icon="receipt_long" label="Movimientos" isActive={activeTab === 'movimientos'} onClick={() => { setInitialTxFilters({ type: 'all', date: 'all' }); setActiveTab('movimientos'); }} />
                             <NavButton icon="inventory_2" label="Stock" isActive={activeTab === 'stock'} onClick={() => setActiveTab('stock')} />
                         </div>
                     </nav>
@@ -1199,7 +1200,7 @@
         }
 
         // --- VISTAS ---
-        function DashboardView({ stats, transactions, onTransactionClick, onViewAll, onOpenAnalytics, onOpenProductionTasks, productionTasks }) {
+        function DashboardView({ stats, transactions, onTransactionClick, onViewAll, onOpenAnalytics, onOpenProductionTasks, productionTasks, onNavigateToTransactions }) {
             const scrollRef = useRef(null);
             useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, []);
 
@@ -1233,7 +1234,7 @@
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-white border border-pink-100 rounded-2xl p-5 shadow-soft flex flex-col justify-between h-[165px]">
+                                <div onClick={() => onNavigateToTransactions && onNavigateToTransactions({ type: 'income', date: 'month' })} className="bg-white border border-pink-100 rounded-2xl p-5 shadow-soft flex flex-col justify-between h-[165px] cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
                                     <div className="flex justify-between items-start">
                                         <div className="bg-green-100 text-green-600 w-10 h-10 flex items-center justify-center rounded-full">
                                             <span className="material-symbols-outlined !text-[24px]">arrow_downward</span>
@@ -1242,7 +1243,7 @@
                                     </div>
                                     <div><span className="text-text-muted text-sm font-medium block mb-1">Ingresos (Mes)</span><p className="text-text-main text-2xl font-bold leading-tight">${stats.currentIncome.toLocaleString()}</p></div>
                                 </div>
-                                <div className="bg-white border border-pink-100 rounded-2xl p-5 shadow-soft flex flex-col justify-between h-[165px]">
+                                <div onClick={() => onNavigateToTransactions && onNavigateToTransactions({ type: 'expense', date: 'month' })} className="bg-white border border-pink-100 rounded-2xl p-5 shadow-soft flex flex-col justify-between h-[165px] cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
                                     <div className="flex justify-between items-start">
                                         <div className="bg-orange-100 text-orange-600 w-10 h-10 flex items-center justify-center rounded-full">
                                             <span className="material-symbols-outlined !text-[24px]">arrow_upward</span>
@@ -1299,13 +1300,13 @@
             );
         }
 
-        function TransactionsView({ transactions, totals, onTransactionClick }) {
+        function TransactionsView({ transactions, totals, onTransactionClick, initialFilterType = 'all', initialFilterDate = 'all' }) {
             const scrollRef = useRef(null);
 
             // --- State para Filtros ---
-            const [filterDate, setFilterDate] = useState('all');
+            const [filterDate, setFilterDate] = useState(initialFilterDate);
             const [filterCategory, setFilterCategory] = useState('all');
-            const [filterType, setFilterType] = useState('all');
+            const [filterType, setFilterType] = useState(initialFilterType);
             const [filterPaymentMethod, setFilterPaymentMethod] = useState('all');
             const [customRange, setCustomRange] = useState({ start: '', end: '' });
 
@@ -1412,51 +1413,62 @@
                         <div className="flex items-center justify-between px-6 pt-4 pb-2">
                             <div className="flex flex-col"><h1 className="text-3xl font-bold tracking-tight text-text-main">Mis Movimientos</h1><p className="text-sm text-text-sub font-medium mt-1">Control de caja</p></div>
                         </div>
-                        <div className="flex w-full gap-3 overflow-x-auto px-6 py-4 hide-scrollbar relative">
-                            <button onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'date' ? null : 'date'); }} className={`group flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full pl-4 pr-3 shadow-sm transition-all active:scale-95 ${filterDate !== 'all' ? 'bg-primary text-white shadow-primary/20' : 'bg-white border border-gray-200 text-text-muted'}`}><span className="text-sm font-semibold leading-normal capitalize">📅 {getFilterLabel()}</span><span className="material-symbols-outlined text-[18px]">expand_more</span></button>
-                            <button onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'category' ? null : 'category'); }} className={`group flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full pl-4 pr-3 border transition-all active:scale-95 ${filterCategory !== 'all' ? 'bg-primary text-white border-transparent' : 'bg-white border-gray-200 text-text-muted'}`}><span className="text-sm font-medium leading-normal">🏷️ {getCategoryLabel()}</span><span className="material-symbols-outlined text-[18px]">expand_more</span></button>
-                            <button onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'type' ? null : 'type'); }} className={`group flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full pl-4 pr-3 border transition-all active:scale-95 ${filterType !== 'all' ? 'bg-primary text-white border-transparent' : 'bg-white border-gray-200 text-text-muted'}`}><span className="text-sm font-medium leading-normal">💰 {getTypeLabel()}</span><span className="material-symbols-outlined text-[18px]">expand_more</span></button>
-                            <button onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'payment' ? null : 'payment'); }} className={`group flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full pl-4 pr-3 border transition-all active:scale-95 ${filterPaymentMethod !== 'all' ? 'bg-primary text-white border-transparent' : 'bg-white border-gray-200 text-text-muted'}`}><span className="text-sm font-medium leading-normal">💳 {getPaymentMethodLabel()}</span><span className="material-symbols-outlined text-[18px]">expand_more</span></button>
+                        <div className="flex w-full gap-3 flex-wrap px-6 py-4 relative">
+                            {/* Fecha */}
+                            <div className="relative shrink-0">
+                                <button onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'date' ? null : 'date'); }} className={`group flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full pl-4 pr-3 shadow-sm transition-all active:scale-95 ${filterDate !== 'all' ? 'bg-primary text-white shadow-primary/20' : 'bg-white border border-gray-200 text-text-muted'}`}><span className="text-sm font-semibold leading-normal capitalize">📅 {getFilterLabel()}</span><span className="material-symbols-outlined text-[18px]">expand_more</span></button>
+                                {activeDropdown === 'date' && (
+                                    <div className="absolute top-full mt-2 left-0 z-50 bg-white rounded-xl shadow-xl border border-gray-100 p-2 w-48 animate-fade-in">
+                                        <button onClick={() => setFilterDate('all')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Todo</button>
+                                        <button onClick={() => setFilterDate('year')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Este Año</button>
+                                        <button onClick={() => setFilterDate('month')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Este Mes</button>
+                                        <button onClick={() => setFilterDate('week')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Esta Semana</button>
+                                        <div className="h-px bg-gray-100 my-1"></div>
+                                        <button onClick={() => { setShowCustomDateModal(true); setFilterDate('custom'); setActiveDropdown(null); }} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Personalizado...</button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Categoría */}
+                            <div className="relative shrink-0">
+                                <button onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'category' ? null : 'category'); }} className={`group flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full pl-4 pr-3 border transition-all active:scale-95 ${filterCategory !== 'all' ? 'bg-primary text-white border-transparent' : 'bg-white border-gray-200 text-text-muted'}`}><span className="text-sm font-medium leading-normal">🏷️ {getCategoryLabel()}</span><span className="material-symbols-outlined text-[18px]">expand_more</span></button>
+                                {activeDropdown === 'category' && (
+                                    <div className="absolute top-full mt-2 left-0 z-50 bg-white rounded-xl shadow-xl border border-gray-100 p-2 w-48 animate-fade-in max-h-60 overflow-y-auto">
+                                        <button onClick={() => setFilterCategory('all')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Todas</button>
+                                        {TRANSACTION_CATEGORIES.map(cat => (
+                                            <button key={cat.id} onClick={() => setFilterCategory(cat.id)} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">{cat.name}</button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Tipo */}
+                            <div className="relative shrink-0">
+                                <button onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'type' ? null : 'type'); }} className={`group flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full pl-4 pr-3 border transition-all active:scale-95 ${filterType !== 'all' ? 'bg-primary text-white border-transparent' : 'bg-white border-gray-200 text-text-muted'}`}><span className="text-sm font-medium leading-normal">💰 {getTypeLabel()}</span><span className="material-symbols-outlined text-[18px]">expand_more</span></button>
+                                {activeDropdown === 'type' && (
+                                    <div className="absolute top-full mt-2 left-0 z-50 bg-white rounded-xl shadow-xl border border-gray-100 p-2 w-40 animate-fade-in">
+                                        <button onClick={() => setFilterType('all')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Todos</button>
+                                        <button onClick={() => setFilterType('income')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Ingresos</button>
+                                        <button onClick={() => setFilterType('expense')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Egresos</button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Pago */}
+                            <div className="relative shrink-0">
+                                <button onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'payment' ? null : 'payment'); }} className={`group flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full pl-4 pr-3 border transition-all active:scale-95 ${filterPaymentMethod !== 'all' ? 'bg-primary text-white border-transparent' : 'bg-white border-gray-200 text-text-muted'}`}><span className="text-sm font-medium leading-normal">💳 {getPaymentMethodLabel()}</span><span className="material-symbols-outlined text-[18px]">expand_more</span></button>
+                                {activeDropdown === 'payment' && (
+                                    <div className="absolute top-full mt-2 left-0 z-50 bg-white rounded-xl shadow-xl border border-gray-100 p-2 w-48 animate-fade-in">
+                                        <button onClick={() => setFilterPaymentMethod('all')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Todos</button>
+                                        {PAYMENT_METHODS.map(method => (
+                                            <button key={method.id} onClick={() => setFilterPaymentMethod(method.id)} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">{method.name}</button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
                     </div>
-
-                    {activeDropdown === 'date' && (
-                        <div className="absolute top-[210px] left-6 z-50 bg-white rounded-xl shadow-xl border border-gray-100 p-2 w-48 animate-fade-in">
-                            <button onClick={() => setFilterDate('all')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Todo</button>
-                            <button onClick={() => setFilterDate('year')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Este Año</button>
-                            <button onClick={() => setFilterDate('month')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Este Mes</button>
-                            <button onClick={() => setFilterDate('week')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Esta Semana</button>
-                            <div className="h-px bg-gray-100 my-1"></div>
-                            <button onClick={() => { setShowCustomDateModal(true); setFilterDate('custom'); setActiveDropdown(null); }} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Personalizado...</button>
-                        </div>
-                    )}
-
-                    {activeDropdown === 'category' && (
-                        <div className="absolute top-[210px] left-32 z-50 bg-white rounded-xl shadow-xl border border-gray-100 p-2 w-48 animate-fade-in max-h-60 overflow-y-auto">
-                            <button onClick={() => setFilterCategory('all')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Todas</button>
-                            {TRANSACTION_CATEGORIES.map(cat => (
-                                <button key={cat.id} onClick={() => setFilterCategory(cat.id)} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">{cat.name}</button>
-                            ))}
-                        </div>
-                    )}
-
-                    {activeDropdown === 'type' && (
-                        <div className="absolute top-[210px] right-32 z-50 bg-white rounded-xl shadow-xl border border-gray-100 p-2 w-40 animate-fade-in">
-                            <button onClick={() => setFilterType('all')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Todos</button>
-                            <button onClick={() => setFilterType('income')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Ingresos</button>
-                            <button onClick={() => setFilterType('expense')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Egresos</button>
-                        </div>
-                    )}
-
-                    {activeDropdown === 'payment' && (
-                        <div className="absolute top-[210px] right-6 z-50 bg-white rounded-xl shadow-xl border border-gray-100 p-2 w-48 animate-fade-in">
-                            <button onClick={() => setFilterPaymentMethod('all')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Todos</button>
-                            {PAYMENT_METHODS.map(method => (
-                                <button key={method.id} onClick={() => setFilterPaymentMethod(method.id)} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50">{method.name}</button>
-                            ))}
-                        </div>
-                    )}
 
                     <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24 scroll-smooth">
                         <div className="px-6 pt-6 pb-2">
