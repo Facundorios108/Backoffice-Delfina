@@ -79,7 +79,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, where, onSnapshot, query, orderBy, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         // --- CONFIGURACIÓN DE FIREBASE (EDITAR AQUÍ PARA NETLIFY) ---
         // Reemplaza los valores con los de tu consola de Firebase
@@ -126,6 +126,9 @@
             updateDoc,
             deleteDoc,
             doc,
+            getDoc,
+            getDocs,
+            where,
             onSnapshot,
             query,
             orderBy,
@@ -237,7 +240,8 @@
 
         const PRODUCT_TYPES = [
             { id: 'musculosa', name: 'Musculosa' },
-            { id: 'remera', name: 'Remera' },
+            { id: 'remera', name: 'Boxy fit' },
+            { id: 'manga_corta', name: 'Manga corta' },
         ];
 
         const MUSCULOSA_DESIGNS = [
@@ -456,6 +460,153 @@
                 };
             }, [transactions]);
 
+            // --- STOCK SYNC HELPERS ---
+            const revertStockAndTasks = async (tx) => {
+                if (tx.category !== 'online' || !tx.products) return;
+                const { db, appId, collection, getDocs, query, where, deleteDoc, updateDoc, doc, addDoc, serverTimestamp } = window.firebaseData;
+                
+                console.log('🔄 Revirtiendo stock y tareas para la transacción:', tx.id);
+
+                // 1. Eliminar tareas de producción
+                try {
+                    const tasksRef = collection(db, 'artifacts', appId, 'users', user.uid, 'productionTasks');
+                    const q = query(tasksRef, where('transactionId', '==', tx.id));
+                    const snapshot = await getDocs(q);
+                    for (const taskDoc of snapshot.docs) {
+                        await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'productionTasks', taskDoc.id));
+                    }
+                    console.log(`✅ ${snapshot.size} tareas eliminadas`);
+                } catch (err) {
+                    console.error('❌ Error al eliminar tareas:', err);
+                }
+
+                // 2. Devolver stock
+                try {
+                    const stockRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock');
+                    const stockSnapshot = await getDocs(stockRef);
+                    
+                    for (const product of tx.products) {
+                        const productTypeData = PRODUCT_TYPES.find(p => p.id === product.productType);
+                        const matchingItem = stockSnapshot.docs.find(docSnap => {
+                            const data = docSnap.data();
+                            // El nombre en el stock ahora coincide con el .name de PRODUCT_TYPES (Musculosa, Boxy fit, Manga corta)
+                            return data.name === productTypeData?.name && data.category === product.musculosaColor;
+                        });
+
+                        if (matchingItem) {
+                            const itemData = matchingItem.data();
+                            const sizeKey = product.musculosaSize.toLowerCase();
+                            const currentStock = itemData.stock?.[sizeKey] || 0;
+                            const newStock = currentStock + 1;
+
+                            await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'stock', matchingItem.id), {
+                                [`stock.${sizeKey}`]: newStock
+                            });
+
+                            // Historial
+                            await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'stockHistory'), {
+                                action: 'update',
+                                itemName: itemData.name,
+                                itemColor: product.musculosaColor,
+                                changes: [{ size: product.musculosaSize.toUpperCase(), oldValue: currentStock, newValue: newStock, difference: 1 }],
+                                description: `Reversión por edición/eliminación de venta online (${tx.id})`,
+                                createdAt: serverTimestamp()
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('❌ Error al revertir stock:', err);
+                }
+            };
+
+            const applyStockAndTasks = async (tx) => {
+                if (tx.category !== 'online' || !tx.products) return;
+                const { db, appId, collection, getDocs, updateDoc, doc, addDoc, serverTimestamp } = window.firebaseData;
+                
+                console.log('🚀 Aplicando stock y tareas para la transacción:', tx.id);
+
+                // 1. Crear tareas de producción
+                try {
+                    const tasksRef = collection(db, 'artifacts', appId, 'users', user.uid, 'productionTasks');
+                    for (const product of tx.products) {
+                        const designName = product.musculosaDesign === 'otro'
+                            ? product.musculosaCustomDesign
+                            : MUSCULOSA_DESIGNS.find(d => d.id === product.musculosaDesign)?.name;
+                        const productTypeData = PRODUCT_TYPES.find(p => p.id === product.productType);
+                        const productName = productTypeData?.name || product.productType;
+                        const colorName = MUSCULOSA_COLORS.find(c => c.id === product.musculosaColor)?.name || product.musculosaColor;
+                        const sizeName = product.musculosaSize.toUpperCase();
+
+                        await addDoc(tasksRef, {
+                            status: 'pendiente',
+                            productType: product.productType,
+                            productName: productName,
+                            design: product.musculosaDesign,
+                            designName: designName,
+                            customDesign: product.musculosaCustomDesign || '',
+                            color: product.musculosaColor,
+                            colorName: colorName,
+                            size: product.musculosaSize,
+                            sizeName: sizeName,
+                            title: `${productName} ${colorName} - ${designName}`,
+                            description: `Talle ${sizeName} - ${tx.title || 'Venta registrada'}`,
+                            notes: '',
+                            transactionId: tx.id,
+                            priority: 'media',
+                            createdAt: serverTimestamp()
+                        });
+                    }
+                } catch (err) {
+                    console.error('❌ Error al crear tareas de producción:', err);
+                }
+
+                // 2. Descontar stock
+                try {
+                    const stockRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock');
+                    const stockSnapshot = await getDocs(stockRef);
+                    
+                    for (const product of tx.products) {
+                        const productTypeData = PRODUCT_TYPES.find(p => p.id === product.productType);
+                        const matchingItem = stockSnapshot.docs.find(docSnap => {
+                            const data = docSnap.data();
+                            return data.name === productTypeData?.name && data.category === product.musculosaColor;
+                        });
+
+                        if (matchingItem) {
+                            const itemData = matchingItem.data();
+                            const sizeKey = product.musculosaSize.toLowerCase();
+                            const currentStock = itemData.stock?.[sizeKey] || 0;
+                            const newStock = Math.max(0, currentStock - 1);
+
+                            await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'stock', matchingItem.id), {
+                                [`stock.${sizeKey}`]: newStock
+                            });
+
+                            // Registrar en el historial
+                            const designName = product.musculosaDesign === 'otro'
+                                ? product.musculosaCustomDesign
+                                : MUSCULOSA_DESIGNS.find(d => d.id === product.musculosaDesign)?.name;
+
+                            await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'stockHistory'), {
+                                action: 'sale',
+                                itemName: itemData.name,
+                                itemColor: product.musculosaColor,
+                                changes: [{
+                                    size: product.musculosaSize.toUpperCase(),
+                                    oldValue: currentStock,
+                                    newValue: newStock,
+                                    difference: -1
+                                }],
+                                description: `Venta online - ${designName}`,
+                                createdAt: serverTimestamp()
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('❌ Error al actualizar stock:', err);
+                }
+            };
+
             // --- HANDLERS ---
             const handleSaveTransaction = async (txData) => {
                 console.log('💾 handleSaveTransaction llamado con:', txData);
@@ -469,7 +620,7 @@
                     alert('Error: Firebase no está listo. Recarga la página.');
                     return;
                 }
-                const { db, appId, collection, addDoc, updateDoc, doc, serverTimestamp, query, onSnapshot, where } = window.firebaseData;
+                const { db, appId, collection, addDoc, updateDoc, doc, getDoc, serverTimestamp } = window.firebaseData;
                 const collectionRef = collection(db, 'artifacts', appId, 'users', user.uid, 'transactions');
 
                 // Limpiar campos undefined
@@ -484,140 +635,30 @@
                     if (editingTransaction) {
                         console.log('📝 Editando transacción:', txData.id);
                         const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', txData.id);
+                        
+                        // 1. Revertir estado anterior (si era online)
+                        const oldSnap = await getDoc(docRef);
+                        if (oldSnap.exists()) {
+                            await revertStockAndTasks({ id: oldSnap.id, ...oldSnap.data() });
+                        }
+
+                        // 2. Actualizar transacción
                         const { id, createdAt, ...dataToUpdate } = cleanData;
                         await updateDoc(docRef, dataToUpdate);
-                        console.log('✅ Transacción actualizada');
+                        
+                        // 3. Aplicar nuevo estado (si es online)
+                        await applyStockAndTasks({ id: txData.id, ...dataToUpdate });
+                        
+                        console.log('✅ Transacción actualizada y sincronizada');
                     } else {
                         console.log('➕ Creando nueva transacción');
                         const { id, ...newTxData } = cleanData;
-                        await addDoc(collectionRef, { ...newTxData, createdAt: serverTimestamp() });
-                        console.log('✅ Transacción creada');
-
-                        // Si es venta online, descontar del stock y crear tareas de producción
-                        if (txData.category === 'online' && txData.products && txData.products.length > 0) {
-                            // Crear tareas de producción para cada producto vendido
-                            try {
-                                const tasksRef = collection(db, 'artifacts', appId, 'users', user.uid, 'productionTasks');
-
-                                for (const product of txData.products) {
-                                    if (!product.productType || !product.musculosaColor || !product.musculosaSize) continue;
-
-                                    const designName = product.musculosaDesign === 'otro'
-                                        ? product.musculosaCustomDesign
-                                        : MUSCULOSA_DESIGNS.find(d => d.id === product.musculosaDesign)?.name;
-                                    const productName = PRODUCT_TYPES.find(p => p.id === product.productType)?.name || product.productType;
-                                    const colorName = MUSCULOSA_COLORS.find(c => c.id === product.musculosaColor)?.name || product.musculosaColor;
-                                    const sizeName = product.musculosaSize.toUpperCase();
-
-                                    // Crear tarea de producción
-                                    await addDoc(tasksRef, {
-                                        status: 'pendiente',
-                                        productType: product.productType,
-                                        productName: productName,
-                                        design: product.musculosaDesign,
-                                        designName: designName,
-                                        customDesign: product.musculosaCustomDesign || '',
-                                        color: product.musculosaColor,
-                                        colorName: colorName,
-                                        size: product.musculosaSize,
-                                        sizeName: sizeName,
-                                        title: `${productName} ${colorName} - ${designName}`,
-                                        description: `Talle ${sizeName} - ${txData.title || 'Venta registrada'}`,
-                                        notes: '',
-                                        transactionId: newTxData.id || Date.now(),
-                                        priority: 'media',
-                                        createdAt: serverTimestamp()
-                                    });
-
-                                    console.log('✅ Tarea de producción creada:', { productName, colorName, sizeName, designName });
-                                }
-                            } catch (taskError) {
-                                console.error('❌ Error al crear tareas de producción:', taskError);
-                            }
-                            try {
-                                console.log('🛒 Procesando descuento de stock para', txData.products.length, 'productos');
-
-                                const stockRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock');
-                                const stockQuery = query(stockRef);
-
-                                const stockSnapshot = await new Promise((resolve, reject) => {
-                                    const unsubscribe = onSnapshot(stockQuery, (snapshot) => {
-                                        unsubscribe();
-                                        resolve(snapshot);
-                                    }, reject);
-                                });
-
-                                // Procesar cada producto vendido
-                                for (const product of txData.products) {
-                                    if (!product.productType || !product.musculosaColor || !product.musculosaSize) continue;
-
-                                    console.log('🛒 Procesando:', {
-                                        tipo: product.productType,
-                                        color: product.musculosaColor,
-                                        talle: product.musculosaSize
-                                    });
-
-                                    // Determinar el tipo de prenda a buscar según el tipo
-                                    const productName = product.productType === 'musculosa' ? 'musculosa' : 'remera';
-
-                                    // Buscar la prenda que coincida con el tipo y color
-                                    const matchingItem = stockSnapshot.docs.find(docSnap => {
-                                        const data = docSnap.data();
-                                        const itemName = (data.name || '').toLowerCase();
-                                        const isMusculosa = itemName.includes('musculosa');
-                                        const isRemera = itemName.includes('remera');
-                                        const matchName = product.productType === 'musculosa'
-                                            ? isMusculosa
-                                            : (product.productType === 'remera' && isRemera && !isMusculosa);
-                                        const matchColor = data.category === product.musculosaColor;
-                                        return matchName && matchColor;
-                                    });
-
-                                    if (matchingItem) {
-                                        const itemData = matchingItem.data();
-                                        const sizeKey = product.musculosaSize.toLowerCase();
-                                        const currentStock = itemData.stock?.[sizeKey] || 0;
-                                        const newStock = Math.max(0, currentStock - 1);
-
-                                        const itemDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'stock', matchingItem.id);
-                                        await updateDoc(itemDocRef, {
-                                            [`stock.${sizeKey}`]: newStock
-                                        });
-
-                                        // Registrar en el historial
-                                        const historyRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stockHistory');
-                                        const designName = product.musculosaDesign === 'otro'
-                                            ? product.musculosaCustomDesign
-                                            : MUSCULOSA_DESIGNS.find(d => d.id === product.musculosaDesign)?.name;
-                                        await addDoc(historyRef, {
-                                            action: 'sale',
-                                            itemName: itemData.name,
-                                            itemColor: product.musculosaColor,
-                                            changes: [{
-                                                size: product.musculosaSize.toUpperCase(),
-                                                oldValue: currentStock,
-                                                newValue: newStock,
-                                                difference: -1
-                                            }],
-                                            description: `Venta online - ${designName}`,
-                                            createdAt: serverTimestamp()
-                                        });
-
-                                        console.log(`✅ Stock actualizado:`, {
-                                            prenda: itemData.name,
-                                            color: product.musculosaColor,
-                                            talle: product.musculosaSize.toUpperCase(),
-                                            anterior: currentStock,
-                                            nuevo: newStock
-                                        });
-                                    } else {
-                                        console.warn('⚠️ No se encontró en stock:', productName, product.musculosaColor);
-                                    }
-                                }
-                            } catch (stockError) {
-                                console.error('❌ Error al actualizar stock:', stockError);
-                            }
-                        }
+                        const docRef = await addDoc(collectionRef, { ...newTxData, createdAt: serverTimestamp() });
+                        
+                        // Aplicar stock y tareas para la nueva transacción
+                        await applyStockAndTasks({ id: docRef.id, ...newTxData });
+                        
+                        console.log('✅ Transacción creada y sincronizada');
                     }
                 } catch (e) {
                     console.error('❌ Error al guardar transacción:', e);
@@ -639,10 +680,19 @@
                     alert('Error: Firebase no está listo.');
                     return;
                 }
-                const { db, appId, deleteDoc, doc } = window.firebaseData;
+                const { db, appId, deleteDoc, doc, getDoc } = window.firebaseData;
                 try {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', id));
-                    console.log('✅ Transacción eliminada');
+                    const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', id);
+                    
+                    // 1. Revertir stock y tareas antes de eliminar
+                    const oldSnap = await getDoc(docRef);
+                    if (oldSnap.exists()) {
+                        await revertStockAndTasks({ id: oldSnap.id, ...oldSnap.data() });
+                    }
+
+                    // 2. Eliminar transacción
+                    await deleteDoc(docRef);
+                    console.log('✅ Transacción eliminada y stock revertido');
                 } catch (e) {
                     console.error('❌ Error al eliminar:', e);
                     alert(`Error al eliminar: ${e.message}`);
