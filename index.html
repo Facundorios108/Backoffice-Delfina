@@ -214,14 +214,15 @@
 
         // --- Mock Data para Seed ---
         const INITIAL_STOCK_DATA = [
-            { name: 'Remera Musculosa', collection: "Básicos", category: 'blanco', price: 15000, stock: { s: 12, m: 8, l: 5, xl: 2 } },
-            { name: 'Remera Musculosa', collection: "Básicos", category: 'negro', price: 15000, stock: { s: 15, m: 2, l: 0, xl: 0 } },
-            { name: 'Remera Musculosa', collection: "Temporada", category: 'chocolate', price: 16500, stock: { s: 5, m: 5, l: 5, xl: 5 } },
+            { name: 'Musculosa', collection: "Básicos", category: 'blanco', price: 15000, stock: { s: 12, m: 8, l: 5, xl: 2 } },
+            { name: 'Musculosa', collection: "Básicos", category: 'negro', price: 15000, stock: { s: 15, m: 2, l: 0, xl: 0 } },
+            { name: 'Musculosa', collection: "Temporada", category: 'chocolate', price: 16500, stock: { s: 5, m: 5, l: 5, xl: 5 } },
         ];
 
         const TRANSACTION_CATEGORIES = [
             { id: 'musculosas', name: 'Musculosas', icon: 'checkroom' },
-            { id: 'remeras', name: 'Remeras', icon: 'storefront' },
+            { id: 'remeras', name: 'Boxy fit', icon: 'storefront' },
+            { id: 'manga_corta', name: 'Manga corta', icon: 'checkroom' },
             { id: 'merceria', name: 'Mercería', icon: 'shopping_bag' },
             { id: 'online', name: 'Venta Online', icon: 'shopping_cart' },
             { id: 'logistica', name: 'Logística', icon: 'local_shipping' },
@@ -1204,11 +1205,20 @@
         // --- VISTAS ---
         function DashboardView({ stats, transactions, onTransactionClick, onViewAll, onOpenAnalytics, onOpenProductionTasks, productionTasks, onNavigateToTransactions }) {
             const scrollRef = useRef(null);
+            const [isBalanceHidden, setIsBalanceHidden] = useState(() => localStorage.getItem('delfinaHideBalance') === 'true');
+            
             useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, []);
 
             // Calcular cantidad de tareas en producción
             const tasksInProgress = productionTasks.filter(task => task.status === 'produccion').length;
             const tasksPending = productionTasks.filter(task => task.status === 'pendiente').length;
+
+            const toggleBalanceVisibility = (e) => {
+                e.stopPropagation();
+                const newVal = !isBalanceHidden;
+                setIsBalanceHidden(newVal);
+                localStorage.setItem('delfinaHideBalance', String(newVal));
+            };
 
             return (
                 <>
@@ -1226,9 +1236,13 @@
                                 <div className="relative z-10">
                                     <div className="flex justify-between items-start">
                                         <span className="text-pink-100 text-sm font-medium uppercase tracking-wider">Balance Total</span>
-                                        <span className="material-symbols-outlined text-pink-200/50 !text-[24px]">account_balance_wallet</span>
+                                        <span onClick={toggleBalanceVisibility} className="material-symbols-outlined text-pink-100 !text-[24px] cursor-pointer hover:text-white transition-colors">
+                                            {isBalanceHidden ? 'visibility_off' : 'visibility'}
+                                        </span>
                                     </div>
-                                    <p className="text-[42px] font-bold tracking-tight leading-none mt-2">${stats.totalBalance.toLocaleString()}</p>
+                                    <p className="text-[42px] font-bold tracking-tight leading-none mt-2">
+                                        {isBalanceHidden ? '***' : `$${stats.totalBalance.toLocaleString()}`}
+                                    </p>
                                     <div className={`flex items-center gap-1.5 mt-4 text-xs w-fit px-3 py-1.5 rounded-lg backdrop-blur-sm ${stats.isBalanceUp ? 'bg-white/20' : 'bg-red-900/30'}`}>
                                         <span className="material-symbols-outlined !text-[16px]">{stats.isBalanceUp ? 'trending_up' : 'trending_down'}</span>
                                         <span className="font-medium">{stats.balanceGrowth > 0 ? '+' : ''}{stats.balanceGrowth}% vs mes anterior</span>
@@ -2030,8 +2044,9 @@
                                     <label className="text-sm font-medium text-text-main ml-1">Tipo de Prenda</label>
                                     <select value={name} onChange={e => setName(e.target.value)} className="block w-full px-4 py-3 border-pink-100 rounded-xl bg-gray-50 text-text-main focus:ring-primary focus:border-primary sm:text-sm">
                                         <option value="">Seleccionar tipo...</option>
-                                        <option value="Remera Musculosa">Musculosa</option>
-                                        <option value="Remera">Remera</option>
+                                        <option value="Musculosa">Musculosa</option>
+                                        <option value="Boxy fit">Boxy fit</option>
+                                        <option value="Manga corta">Manga corta</option>
                                     </select>
                                 </div>
                                 {/* Colección */}
