@@ -31,14 +31,20 @@ function LoginScreen({ onLoginGoogle, onLoginGuest, onLoginEmail, onRegisterEmai
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-background-light flex flex-col justify-center items-center p-6 overflow-y-auto pb-12">
-            <div className="w-full max-w-md bg-white rounded-3xl shadow-soft border border-pink-50 p-8 space-y-6 animate-fade-in relative overflow-hidden my-8">
+        <div className="fixed inset-0 z-50 bg-background-light flex flex-col justify-center items-center p-6 overflow-y-auto py-12">
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-soft border border-pink-50 p-8 pb-10 space-y-6 animate-fade-in relative my-8">
                 {/* Decoración superior */}
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary via-pink-400 to-primary"></div>
 
                 {/* Logo */}
                 <div className="flex flex-col items-center gap-2 mt-2">
-                    <img src="/logo-delfina.png" alt="Delfina Logo" className="w-28 h-28 rounded-full object-cover shadow-lg border-4 border-pink-50" />
+                    <div className="w-32 h-32 rounded-full overflow-hidden bg-white shadow-lg border-4 border-pink-50">
+                        <img 
+                            src="/logo-delfina-dashboard.png" 
+                            alt="Delfina Logo" 
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
                     <h2 className="text-2xl font-bold text-text-main tracking-tight mt-2">Delfina Concept</h2>
                     <p className="text-xs text-text-muted font-medium uppercase tracking-wider">Gestión Financiera & Stock</p>
                 </div>
@@ -133,7 +139,7 @@ function LoginScreen({ onLoginGoogle, onLoginGuest, onLoginEmail, onRegisterEmai
                     className="w-full bg-pink-50/50 hover:bg-pink-100/50 border border-dashed border-pink-200 text-primary font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 text-sm active:scale-[0.98]"
                 >
                     <span className="material-symbols-outlined !text-[20px] text-primary">cloud_queue</span>
-                    <span>Entrar como Invitado (Modo Temporal)</span>
+                    <span>Modo Invitado</span>
                 </button>
             </div>
         </div>
