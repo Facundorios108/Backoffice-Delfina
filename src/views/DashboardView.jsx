@@ -24,7 +24,7 @@ function DashboardView({ stats, transactions, onTransactionClick, onViewAll, onO
             {/* Logo Centrado */}
             <div className="flex justify-center items-center px-4 py-3 bg-background-light">
                 <div className="w-full max-w-sm flex items-center justify-center">
-                    <img src="logo-delfina-dashboard.png" alt="Delfina Logo" style={{ maxWidth: '100%', height: 'auto', maxHeight: '120px' }} />
+                    <img src="/logo-delfina.png" alt="Delfina Logo" style={{ maxWidth: '100%', height: 'auto', maxHeight: '120px' }} />
                 </div>
             </div>
 

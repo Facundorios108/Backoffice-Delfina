@@ -338,24 +338,18 @@ export default function App() {
         }
     };
 
-    const handleLogout = () => {
-        showCustomConfirm(
-            'Cerrar Sesión',
-            '¿Estás seguro de que deseas cerrar sesión? Volverás a la pantalla de login.',
-            async () => {
-                try {
-                    console.log('🔄 Cerrando sesión...');
-                    setIsLoading(true);
-                    await signOut(auth);
-                    console.log('✅ Sesión cerrada.');
-                    setShowAuthModal(false);
-                } catch (error) {
-                    console.error('❌ Error al cerrar sesión:', error);
-                    showCustomAlert('Error de Sesión', error.message);
-                    setIsLoading(false);
-                }
-            }
-        );
+    const handleLogout = async () => {
+        try {
+            console.log('🔄 Cerrando sesión...');
+            setIsLoading(true);
+            await signOut(auth);
+            console.log('✅ Sesión cerrada.');
+            setShowAuthModal(false);
+        } catch (error) {
+            console.error('❌ Error al cerrar sesión:', error);
+            showCustomAlert('Error de Sesión', error.message);
+            setIsLoading(false);
+        }
     };
 
     // 1. Efecto de Autenticación

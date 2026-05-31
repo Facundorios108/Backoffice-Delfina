@@ -38,7 +38,7 @@ function LoginScreen({ onLoginGoogle, onLoginGuest, onLoginEmail, onRegisterEmai
 
                 {/* Logo */}
                 <div className="flex flex-col items-center gap-2 mt-2">
-                    <img src="logo-delfina.png" alt="Delfina Logo" className="w-16 h-16 object-contain" />
+                    <img src="/logo-delfina.png" alt="Delfina Logo" className="w-16 h-16 object-contain" />
                     <h2 className="text-2xl font-bold text-text-main tracking-tight mt-2">Delfina Concept</h2>
                     <p className="text-xs text-text-muted font-medium uppercase tracking-wider">Gestión Financiera & Stock</p>
                 </div>
