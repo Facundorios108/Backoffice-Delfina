@@ -6,7 +6,16 @@ function DashboardView({ stats, transactions, onTransactionClick, onViewAll, onO
     const scrollRef = useRef(null);
     const [isBalanceHidden, setIsBalanceHidden] = useState(() => localStorage.getItem('delfinaHideBalance') === 'true');
     
-    useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, []);
+    // Scroll al top cuando la vista se monta o se vuelve a mostrar
+    useEffect(() => {
+        // Usar requestAnimationFrame para asegurar que el DOM está listo
+        requestAnimationFrame(() => {
+            if (scrollRef.current) {
+                scrollRef.current.scrollTop = 0;
+            }
+            window.scrollTo(0, 0);
+        });
+    }, []);
 
     // Calcular cantidad de tareas en producción
     const tasksInProgress = productionTasks.filter(task => task.status === 'produccion').length;

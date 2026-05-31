@@ -21,8 +21,15 @@ function TransactionsView({ transactions, totals, onTransactionClick, initialFil
         return () => window.removeEventListener('click', handleClick);
     }, [activeDropdown]);
 
+    // Scroll al top cuando la vista se monta o se vuelve a mostrar
     useEffect(() => {
-        if (scrollRef.current) scrollRef.current.scrollTop = 0;
+        // Usar requestAnimationFrame para asegurar que el DOM está listo
+        requestAnimationFrame(() => {
+            if (scrollRef.current) {
+                scrollRef.current.scrollTop = 0;
+            }
+            window.scrollTo(0, 0);
+        });
     }, []);
 
     // --- Lógica de Filtrado ---

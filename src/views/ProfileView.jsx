@@ -48,6 +48,12 @@ export default function ProfileView({
     const [tempSettings, setTempSettings] = useState(null);
     const [isSavingSettings, setIsSavingSettings] = useState(false);
     const [selectedListKey, setSelectedListKey] = useState('transactionCategories');
+    
+    // Estados para el modal de PIN
+    const [showPinModal, setShowPinModal] = useState(false);
+    const [pinModalMode, setPinModalMode] = useState('create'); // 'create' o 'change'
+    const [pinInput, setPinInput] = useState('');
+    const [pinError, setPinError] = useState('');
     const [newItemName, setNewItemName] = useState('');
     const [newItemIcon, setNewItemIcon] = useState('checkroom');
     const [newItemColorCode, setNewItemColorCode] = useState('bg-pink-500');
@@ -64,8 +70,15 @@ export default function ProfileView({
         }
     }, [settings]);
 
+    // Scroll al top cuando la vista se monta o se vuelve a mostrar
     useEffect(() => {
-        if (scrollRef.current) scrollRef.current.scrollTop = 0;
+        // Usar requestAnimationFrame para asegurar que el DOM está listo
+        requestAnimationFrame(() => {
+            if (scrollRef.current) {
+                scrollRef.current.scrollTop = 0;
+            }
+            window.scrollTo(0, 0);
+        });
         
         // Verificar si estamos en modo PWA standalone
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
@@ -306,6 +319,42 @@ export default function ProfileView({
         }
     };
     
+    // --- MANEJADORES DEL MODAL DE PIN ---
+    const handleOpenPinModal = (mode) => {
+        setPinModalMode(mode);
+        setPinInput('');
+        setPinError('');
+        setShowPinModal(true);
+    };
+    
+    const handleClosePinModal = () => {
+        setShowPinModal(false);
+        setPinInput('');
+        setPinError('');
+    };
+    
+    const handlePinInputChange = (e) => {
+        const value = e.target.value.replace(/\D/g, ''); // Solo dígitos
+        if (value.length <= 6) {
+            setPinInput(value);
+            setPinError('');
+        }
+    };
+    
+    const handleSavePin = () => {
+        if (pinInput.length < 4 || pinInput.length > 6) {
+            setPinError('El PIN debe tener entre 4 y 6 dígitos');
+            return;
+        }
+        
+        localStorage.setItem('delfina_backup_pin', pinInput);
+        showCustomAlert(
+            pinModalMode === 'create' ? 'PIN Configurado' : 'PIN Actualizado',
+            'Tu PIN de respaldo ha sido guardado correctamente.'
+        );
+        handleClosePinModal();
+    };
+    
     // --- MANEJADOR DE ENVIAR TICKET SOPORTE ---
     const handleSubmitTicket = async (e) => {
         e.preventDefault();
@@ -503,48 +552,107 @@ export default function ProfileView({
                 <div className="space-y-3">
                     <h3 className="text-sm font-bold text-text-muted uppercase tracking-wider pl-1">Seguridad</h3>
                     <div className="bg-white rounded-3xl border border-pink-100/50 p-5 shadow-soft space-y-4">
-                        <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-pink-600 flex items-center justify-center shrink-0">
-                                <span className="material-symbols-outlined text-white !text-[24px]">fingerprint</span>
+                        {/* Face ID / Touch ID */}
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 flex-1">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-pink-600 flex items-center justify-center shrink-0">
+                                    <span className="material-symbols-outlined text-white !text-[26px]">fingerprint</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="text-sm font-bold text-text-main">Face ID / Touch ID</h4>
+                                    <p className="text-xs text-text-muted mt-0.5">
+                                        Desbloquear al abrir la app
+                                    </p>
+                                </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <h4 className="text-sm font-bold text-text-main mb-1">Face ID / Touch ID</h4>
-                                <p className="text-xs text-text-muted leading-relaxed mb-3">
-                                    Desbloquea la app con Face ID, Touch ID o huella digital cada vez que la abras. Añade una capa extra de seguridad sin afectar tu inicio de sesión.
-                                </p>
-                                
-                                <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50/50 cursor-pointer hover:bg-pink-50/30 hover:border-primary/20 transition-colors">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={localStorage.getItem('delfina_biometric_enabled') === 'true'}
-                                        onChange={(e) => {
-                                            const enabled = e.target.checked;
-                                            localStorage.setItem('delfina_biometric_enabled', String(enabled));
-                                            
-                                            if (!enabled) {
-                                                // Limpiar credencial guardada
-                                                localStorage.removeItem('delfina_biometric_credential');
-                                                showCustomAlert('Biometría Desactivada', 'La autenticación biométrica ha sido desactivada. Se eliminó la credencial almacenada.');
-                                            } else {
-                                                showCustomAlert('Biometría Activada', 'La próxima vez que abras la app, se te pedirá usar Face ID, Touch ID o huella digital para desbloquearla.');
-                                            }
-                                        }}
-                                        className="rounded border-pink-200 text-primary focus:ring-primary h-5 w-5" 
-                                    />
-                                    <div className="flex-1">
-                                        <span className="text-xs font-semibold text-text-main block">Requerir biometría al abrir</span>
-                                        <span className="text-[10px] text-text-muted">
-                                            {localStorage.getItem('delfina_biometric_enabled') === 'true' ? '🟢 Activo' : '⚪ Desactivado'}
-                                        </span>
-                                    </div>
-                                </label>
+                            
+                            {/* Toggle Switch */}
+                            <label className="relative inline-block w-14 h-7 shrink-0 cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    checked={localStorage.getItem('delfina_biometric_enabled') === 'true'}
+                                    onChange={(e) => {
+                                        const enabled = e.target.checked;
+                                        localStorage.setItem('delfina_biometric_enabled', String(enabled));
+                                        
+                                        if (!enabled) {
+                                            localStorage.removeItem('delfina_biometric_credential');
+                                            showCustomAlert('Biometría Desactivada', 'La autenticación biométrica ha sido desactivada.');
+                                        } else {
+                                            showCustomAlert('Biometría Activada', 'La próxima vez que abras la app, se te pedirá usar Face ID, Touch ID o huella digital.');
+                                        }
+                                    }}
+                                    className="peer sr-only" 
+                                />
+                                <div className="w-14 h-7 bg-gray-200 rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/20 transition-all duration-300"></div>
+                                <div className="absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow-md transition-all duration-300 peer-checked:translate-x-7"></div>
+                            </label>
+                        </div>
 
-                                {window.PublicKeyCredential === undefined && (
-                                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
-                                        <p className="text-xs text-yellow-800">
-                                            ⚠️ Tu navegador no soporta autenticación biométrica. Prueba usando Safari en iOS o Chrome en Android para usar esta funcionalidad.
-                                        </p>
-                                    </div>
+                        {window.PublicKeyCredential === undefined && (
+                            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-2">
+                                <span className="material-symbols-outlined text-yellow-600 !text-[18px] shrink-0 mt-0.5">warning</span>
+                                <p className="text-xs text-yellow-800 leading-relaxed">
+                                    Tu navegador no soporta autenticación biométrica. Usa Safari (iOS) o Chrome (Android).
+                                </p>
+                            </div>
+                        )}
+
+                        <hr className="border-pink-50" />
+
+                        {/* PIN de Respaldo */}
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 flex-1">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shrink-0">
+                                    <span className="material-symbols-outlined text-white !text-[26px]">pin</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="text-sm font-bold text-text-main">PIN de Respaldo</h4>
+                                    <p className="text-xs text-text-muted mt-0.5">
+                                        {localStorage.getItem('delfina_backup_pin') ? 'PIN configurado' : 'Método alternativo (4-6 dígitos)'}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 shrink-0">
+                                {localStorage.getItem('delfina_backup_pin') ? (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                showCustomConfirm(
+                                                    'Cambiar PIN',
+                                                    '¿Deseas cambiar tu PIN de respaldo?',
+                                                    () => handleOpenPinModal('change')
+                                                );
+                                            }}
+                                            className="px-3 py-1.5 bg-purple-50 text-purple-600 text-xs font-semibold rounded-lg hover:bg-purple-100 transition-colors active:scale-95"
+                                        >
+                                            Cambiar
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                showCustomConfirm(
+                                                    'Eliminar PIN',
+                                                    '¿Estás seguro? Solo podrás usar biometría para desbloquear.',
+                                                    () => {
+                                                        localStorage.removeItem('delfina_backup_pin');
+                                                        showCustomAlert('PIN Eliminado', 'Tu PIN de respaldo ha sido eliminado.');
+                                                    }
+                                                );
+                                            }}
+                                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors active:scale-95"
+                                            title="Eliminar PIN"
+                                        >
+                                            <span className="material-symbols-outlined !text-[18px]">delete</span>
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        onClick={() => handleOpenPinModal('create')}
+                                        className="px-4 py-2 bg-purple-50 text-purple-600 text-xs font-semibold rounded-xl hover:bg-purple-100 transition-colors active:scale-95"
+                                    >
+                                        Configurar
+                                    </button>
                                 )}
                             </div>
                         </div>
@@ -918,6 +1026,83 @@ export default function ProfileView({
                 </div>
                 
             </main>
+
+            {/* Modal de Configuración de PIN */}
+            {showPinModal && (
+                <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full border border-pink-100/50 animate-slide-up">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
+                                <span className="material-symbols-outlined text-purple-600 !text-[24px]">pin</span>
+                            </div>
+                            <h4 className="text-base font-bold text-text-main">
+                                {pinModalMode === 'create' ? 'Configurar PIN' : 'Cambiar PIN'}
+                            </h4>
+                        </div>
+                        
+                        <p className="text-sm text-text-muted leading-relaxed mb-6">
+                            {pinModalMode === 'create' 
+                                ? 'Crea un PIN de 4-6 dígitos para desbloquear la app cuando la biometría no esté disponible.'
+                                : 'Ingresa tu nuevo PIN de 4-6 dígitos.'}
+                        </p>
+
+                        <div className="space-y-4 mb-6">
+                            <input
+                                type="password"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={6}
+                                value={pinInput}
+                                onChange={handlePinInputChange}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && pinInput.length >= 4) {
+                                        handleSavePin();
+                                    }
+                                }}
+                                placeholder="Ingresa tu PIN"
+                                className="w-full px-6 py-4 text-center text-2xl font-bold tracking-[0.5em] rounded-2xl border-2 border-pink-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                autoFocus
+                            />
+                            
+                            {/* Indicador de longitud */}
+                            <div className="flex justify-center gap-2">
+                                {[...Array(6)].map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className={`w-3 h-3 rounded-full transition-all ${
+                                            i < pinInput.length
+                                                ? 'bg-purple-600 scale-110'
+                                                : 'bg-gray-200'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                            
+                            {pinError && (
+                                <p className="text-xs text-red-500 text-center font-medium animate-shake">
+                                    {pinError}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="flex gap-3 justify-end">
+                            <button 
+                                onClick={handleClosePinModal}
+                                className="px-5 py-2.5 text-xs font-bold text-text-muted hover:bg-gray-100 rounded-xl border border-gray-100 transition-colors focus:outline-none"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={handleSavePin}
+                                disabled={pinInput.length < 4}
+                                className="px-5 py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-md transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {pinModalMode === 'create' ? 'Guardar PIN' : 'Actualizar PIN'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

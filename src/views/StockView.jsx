@@ -13,7 +13,16 @@ function StockView({ items, onItemClick, onOpenHistory }) {
         } catch(e) { return []; }
     });
 
-    useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, []);
+    // Scroll al top cuando la vista se monta o se vuelve a mostrar
+    useEffect(() => {
+        // Usar requestAnimationFrame para asegurar que el DOM está listo
+        requestAnimationFrame(() => {
+            if (scrollRef.current) {
+                scrollRef.current.scrollTop = 0;
+            }
+            window.scrollTo(0, 0);
+        });
+    }, []);
 
     useEffect(() => {
         // Remover notificaciones leídas si el producto ya no tiene bajo stock

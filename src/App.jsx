@@ -514,6 +514,18 @@ export default function App() {
         };
     }, [transactions]);
 
+    // Resetear scroll cuando cambia la sección activa
+    useEffect(() => {
+        // Usar requestAnimationFrame para asegurar que se ejecute después del render
+        requestAnimationFrame(() => {
+            // Scroll del window/body principal
+            window.scrollTo(0, 0);
+            // También forzar el scroll en el documento
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        });
+    }, [activeTab]);
+
     // --- STOCK SYNC HELPERS ---
     const revertStockAndTasks = async (tx) => {
         if (tx.category !== 'online' || !tx.products) return;
