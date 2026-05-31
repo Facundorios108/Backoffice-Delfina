@@ -38,6 +38,7 @@ import {
 // Subcomponents
 import NavButton from './components/NavButton';
 import AccountAuthModal from './components/AccountAuthModal';
+import BiometricLock from './components/BiometricLock';
 
 // Screens
 import LoginScreen from './screens/LoginScreen';
@@ -71,6 +72,10 @@ export default function App() {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [initialTxFilters, setInitialTxFilters] = useState({ type: 'all', date: 'all' });
     const [isLoading, setIsLoading] = useState(true);
+    
+    // Estados para el bloqueo biométrico
+    const [isBiometricLocked, setIsBiometricLocked] = useState(false);
+    const [biometricChecked, setBiometricChecked] = useState(false);
 
     // Modales separados
     const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -368,6 +373,52 @@ export default function App() {
         });
         return () => unsubAuth();
     }, []);
+
+    // 1.5. Efecto de Verificación Biométrica
+    useEffect(() => {
+        // Solo verificar cuando el usuario esté autenticado y hayamos terminado de cargar
+        if (!user || isLoading || biometricChecked) return;
+        
+        // Verificar si el usuario tiene habilitada la biometría
+        const biometricEnabled = localStorage.getItem('delfina_biometric_enabled') === 'true';
+        
+        if (biometricEnabled) {
+            console.log('🔒 Biometría habilitada, mostrando pantalla de bloqueo...');
+            setIsBiometricLocked(true);
+        }
+        
+        setBiometricChecked(true);
+    }, [user, isLoading, biometricChecked]);
+
+    // Resetear estado biométrico cuando el usuario cierra sesión
+    useEffect(() => {
+        if (!user) {
+            setBiometricChecked(false);
+            setIsBiometricLocked(false);
+        }
+    }, [user]);
+
+    // Detectar cuando el usuario vuelve a la app (después de minimizar o cambiar de pestaña)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && user && !isLoading) {
+                const biometricEnabled = localStorage.getItem('delfina_biometric_enabled') === 'true';
+                if (biometricEnabled) {
+                    console.log('🔒 App visible nuevamente, solicitando biometría...');
+                    setIsBiometricLocked(true);
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [user, isLoading]);
+
+    // Función para desbloquear la app después de autenticación biométrica exitosa
+    const handleBiometricUnlock = () => {
+        console.log('✅ App desbloqueada con biometría');
+        setIsBiometricLocked(false);
+    };
 
     // 2. Efecto de Base de Datos
     useEffect(() => {
@@ -908,6 +959,12 @@ export default function App() {
                 )}
             </>
         );
+    }
+
+    // Si está bloqueado por biometría, mostrar pantalla de bloqueo
+    if (isBiometricLocked) {
+        const userName = customDisplayName || (user && !user.isAnonymous ? (user.displayName || user.email?.split('@')[0] || 'Usuario') : 'Usuario');
+        return <BiometricLock onUnlock={handleBiometricUnlock} userName={userName} />;
     }
 
     return (

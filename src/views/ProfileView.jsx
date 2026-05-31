@@ -499,7 +499,59 @@ export default function ProfileView({
                     </div>
                 </div>
                 
-                {/* 2. Centro de Datos / Backup Center */}
+                {/* 2. Seguridad & Autenticación Biométrica */}
+                <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-text-muted uppercase tracking-wider pl-1">Seguridad</h3>
+                    <div className="bg-white rounded-3xl border border-pink-100/50 p-5 shadow-soft space-y-4">
+                        <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-pink-600 flex items-center justify-center shrink-0">
+                                <span className="material-symbols-outlined text-white !text-[24px]">fingerprint</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-bold text-text-main mb-1">Face ID / Touch ID</h4>
+                                <p className="text-xs text-text-muted leading-relaxed mb-3">
+                                    Desbloquea la app con Face ID, Touch ID o huella digital cada vez que la abras. Añade una capa extra de seguridad sin afectar tu inicio de sesión.
+                                </p>
+                                
+                                <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50/50 cursor-pointer hover:bg-pink-50/30 hover:border-primary/20 transition-colors">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={localStorage.getItem('delfina_biometric_enabled') === 'true'}
+                                        onChange={(e) => {
+                                            const enabled = e.target.checked;
+                                            localStorage.setItem('delfina_biometric_enabled', String(enabled));
+                                            
+                                            if (!enabled) {
+                                                // Limpiar credencial guardada
+                                                localStorage.removeItem('delfina_biometric_credential');
+                                                showCustomAlert('Biometría Desactivada', 'La autenticación biométrica ha sido desactivada. Se eliminó la credencial almacenada.');
+                                            } else {
+                                                showCustomAlert('Biometría Activada', 'La próxima vez que abras la app, se te pedirá usar Face ID, Touch ID o huella digital para desbloquearla.');
+                                            }
+                                        }}
+                                        className="rounded border-pink-200 text-primary focus:ring-primary h-5 w-5" 
+                                    />
+                                    <div className="flex-1">
+                                        <span className="text-xs font-semibold text-text-main block">Requerir biometría al abrir</span>
+                                        <span className="text-[10px] text-text-muted">
+                                            {localStorage.getItem('delfina_biometric_enabled') === 'true' ? '🟢 Activo' : '⚪ Desactivado'}
+                                        </span>
+                                    </div>
+                                </label>
+
+                                {window.PublicKeyCredential === undefined && (
+                                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+                                        <p className="text-xs text-yellow-800">
+                                            ⚠️ Tu navegador no soporta autenticación biométrica. Prueba usando Safari en iOS o Chrome en Android para usar esta funcionalidad.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* 3. Centro de Datos / Backup Center */}
                 <div className="space-y-3">
                     <h3 className="text-sm font-bold text-text-muted uppercase tracking-wider pl-1">Centro de Backup & Descarga</h3>
                     <div className="bg-white rounded-3xl border border-pink-100/50 p-5 shadow-soft space-y-4">
@@ -526,7 +578,7 @@ export default function ProfileView({
                     </div>
                 </div>
 
-                {/* 3. Sala de Control (Personalización) */}
+                {/* 4. Sala de Control (Personalización) */}
                 {tempSettings && (
                     <div className="space-y-3">
                         <h3 className="text-sm font-bold text-text-muted uppercase tracking-wider pl-1">Sala de Control</h3>
