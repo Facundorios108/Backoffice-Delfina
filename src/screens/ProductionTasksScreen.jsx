@@ -286,7 +286,11 @@ function ProductionTasksScreen({ onClose, tasks, onUpdateStatus, onUpdateNotes, 
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <h4 className="text-text-main font-bold text-base leading-tight">{task.title}</h4>
-                                                            <p className="text-text-muted text-xs mt-0.5 line-clamp-1">{task.description}</p>
+                                                            <p className="text-text-muted text-xs mt-0.5 line-clamp-1">
+                                                                {task.sizeName && <span className="font-semibold">Talle {task.sizeName}</span>}
+                                                                {task.sizeName && task.description && ' - '}
+                                                                {task.description || ''}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <div className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.color}`}></div>
@@ -399,7 +403,11 @@ function ProductionTasksScreen({ onClose, tasks, onUpdateStatus, onUpdateNotes, 
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <h4 className="text-text-main font-bold text-base leading-tight">{task.title}</h4>
-                                                            <p className="text-text-muted text-xs mt-0.5 line-clamp-1">{task.description}</p>
+                                                            <p className="text-text-muted text-xs mt-0.5 line-clamp-1">
+                                                                {task.sizeName && <span className="font-semibold">Talle {task.sizeName}</span>}
+                                                                {task.sizeName && task.description && ' - '}
+                                                                {task.description || ''}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <div className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.color}`}></div>
@@ -512,7 +520,11 @@ function ProductionTasksScreen({ onClose, tasks, onUpdateStatus, onUpdateNotes, 
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <h4 className="text-text-main font-bold text-base leading-tight">{task.title}</h4>
-                                                            <p className="text-text-muted text-xs mt-0.5 line-clamp-1">{task.description}</p>
+                                                            <p className="text-text-muted text-xs mt-0.5 line-clamp-1">
+                                                                {task.sizeName && <span className="font-semibold">Talle {task.sizeName}</span>}
+                                                                {task.sizeName && task.description && ' - '}
+                                                                {task.description || ''}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <div className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.color}`}></div>
@@ -625,7 +637,11 @@ function ProductionTasksScreen({ onClose, tasks, onUpdateStatus, onUpdateNotes, 
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <h4 className="text-text-main font-bold text-base leading-tight">{task.title}</h4>
-                                                            <p className="text-text-muted text-xs mt-0.5 line-clamp-1">{task.description}</p>
+                                                            <p className="text-text-muted text-xs mt-0.5 line-clamp-1">
+                                                                {task.sizeName && <span className="font-semibold">Talle {task.sizeName}</span>}
+                                                                {task.sizeName && task.description && ' - '}
+                                                                {task.description || ''}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <div className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.color}`}></div>
@@ -738,7 +754,11 @@ function ProductionTasksScreen({ onClose, tasks, onUpdateStatus, onUpdateNotes, 
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <h4 className="text-text-main font-bold text-base leading-tight">{task.title}</h4>
-                                                            <p className="text-text-muted text-xs mt-0.5 line-clamp-1">{task.description}</p>
+                                                            <p className="text-text-muted text-xs mt-0.5 line-clamp-1">
+                                                                {task.sizeName && <span className="font-semibold">Talle {task.sizeName}</span>}
+                                                                {task.sizeName && task.description && ' - '}
+                                                                {task.description || ''}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <div className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.color}`}></div>
@@ -850,7 +870,11 @@ function ProductionTasksScreen({ onClose, tasks, onUpdateStatus, onUpdateNotes, 
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <h4 className="text-text-main font-bold text-base leading-tight line-through">{task.title}</h4>
-                                                            <p className="text-text-muted text-xs mt-0.5 line-clamp-1">{task.description}</p>
+                                                            <p className="text-text-muted text-xs mt-0.5 line-clamp-1">
+                                                                {task.sizeName && <span className="font-semibold">Talle {task.sizeName}</span>}
+                                                                {task.sizeName && task.description && ' - '}
+                                                                {task.description || ''}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <span className="material-symbols-outlined text-green-500 !text-[24px]">check_circle</span>

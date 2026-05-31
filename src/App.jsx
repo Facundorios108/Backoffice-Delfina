@@ -73,6 +73,10 @@ export default function App() {
     const [initialTxFilters, setInitialTxFilters] = useState({ type: 'all', date: 'all' });
     const [isLoading, setIsLoading] = useState(true);
     
+    // Estados de loading para operaciones
+    const [isSavingTransaction, setIsSavingTransaction] = useState(false);
+    const [isSavingStock, setIsSavingStock] = useState(false);
+    
     // Estados para el bloqueo biométrico
     const [isBiometricLocked, setIsBiometricLocked] = useState(false);
     const [biometricChecked, setBiometricChecked] = useState(false);
@@ -528,19 +532,37 @@ export default function App() {
 
     // --- STOCK SYNC HELPERS ---
     const revertStockAndTasks = async (tx) => {
-        if (tx.category !== 'online' || !tx.products) return;
+        if (tx.category !== 'online' || !tx.products) return null;
         
         console.log('🔄 Revirtiendo stock y tareas para la transacción:', tx.id);
 
-        // 1. Eliminar tareas de producción
+        // 1. GUARDAR metadata de tareas antes de eliminarlas (para preservar al editar)
+        const savedTasksMetadata = [];
         try {
             const tasksRef = collection(db, 'artifacts', appId, 'users', user.uid, 'productionTasks');
             const q = query(tasksRef, where('transactionId', '==', tx.id));
             const snapshot = await getDocs(q);
+            
             for (const taskDoc of snapshot.docs) {
+                const taskData = taskDoc.data();
+                // Guardar metadata importante de cada tarea
+                savedTasksMetadata.push({
+                    id: taskDoc.id,
+                    status: taskData.status,
+                    createdAt: taskData.createdAt,
+                    notes: taskData.notes || '',
+                    // Identificadores para hacer match después
+                    productType: taskData.productType,
+                    color: taskData.color,
+                    size: taskData.size,
+                    design: taskData.design,
+                    customDesign: taskData.customDesign
+                });
+                
+                // Eliminar la tarea
                 await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'productionTasks', taskDoc.id));
             }
-            console.log(`✅ ${snapshot.size} tareas eliminadas`);
+            console.log(`✅ ${snapshot.size} tareas eliminadas (metadata guardada)`);
         } catch (err) {
             console.error('❌ Error al eliminar tareas:', err);
         }
@@ -581,14 +603,18 @@ export default function App() {
         } catch (err) {
             console.error('❌ Error al revertir stock:', err);
         }
+        
+        // Devolver la metadata guardada de las tareas para poder restaurarla después
+        return savedTasksMetadata;
     };
 
-    const applyStockAndTasks = async (tx) => {
+    const applyStockAndTasks = async (tx, savedTasksMetadata = []) => {
         if (tx.category !== 'online' || !tx.products) return;
         
         console.log('🚀 Aplicando stock y tareas para la transacción:', tx.id);
+        console.log('📦 Metadata de tareas guardadas para restaurar:', savedTasksMetadata.length);
 
-        // 1. Crear tareas de producción
+        // 1. Crear tareas de producción (con metadata restaurada si existe)
         try {
             const tasksRef = collection(db, 'artifacts', appId, 'users', user.uid, 'productionTasks');
             for (const product of tx.products) {
@@ -600,8 +626,18 @@ export default function App() {
                 const colorName = MUSCULOSA_COLORS.find(c => c.id === product.musculosaColor)?.name || product.musculosaColor;
                 const sizeName = product.musculosaSize.toUpperCase();
 
-                await addDoc(tasksRef, {
-                    status: 'pendiente',
+                // Intentar hacer match con tarea guardada anterior (para preservar status, fecha, notas al editar)
+                const matchingTask = savedTasksMetadata.find(saved => 
+                    saved.productType === product.productType &&
+                    saved.color === product.musculosaColor &&
+                    saved.size === product.musculosaSize &&
+                    saved.design === product.musculosaDesign &&
+                    (saved.customDesign || '') === (product.musculosaCustomDesign || '')
+                );
+
+                // Si hay match, restaurar metadata original; sino usar valores por defecto
+                const taskData = {
+                    status: matchingTask ? matchingTask.status : 'pendiente',
                     productType: product.productType,
                     productName: productName,
                     design: product.musculosaDesign,
@@ -612,12 +648,20 @@ export default function App() {
                     size: product.musculosaSize,
                     sizeName: sizeName,
                     title: `${productName} ${colorName} - ${designName}`,
-                    description: `Talle ${sizeName} - ${tx.title || 'Venta registrada'}`,
-                    notes: '',
+                    description: tx.description || 'Sin descripción',
+                    notes: matchingTask ? matchingTask.notes : '',
                     transactionId: tx.id,
                     priority: 'media',
-                    createdAt: serverTimestamp()
-                });
+                    createdAt: matchingTask ? matchingTask.createdAt : serverTimestamp()
+                };
+
+                await addDoc(tasksRef, taskData);
+                
+                if (matchingTask) {
+                    console.log(`✅ Tarea restaurada con status "${matchingTask.status}" y fecha original`);
+                } else {
+                    console.log(`➕ Nueva tarea creada con status "pendiente"`);
+                }
             }
         } catch (err) {
             console.error('❌ Error al crear tareas de producción:', err);
@@ -679,6 +723,8 @@ export default function App() {
             return;
         }
 
+        setIsSavingTransaction(true); // Activar loading
+
         const collectionRef = collection(db, 'artifacts', appId, 'users', user.uid, 'transactions');
 
         // Limpiar campos undefined
@@ -694,35 +740,38 @@ export default function App() {
                 console.log('📝 Editando transacción:', txData.id);
                 const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', txData.id);
                 
-                // 1. Revertir estado anterior (si era online)
+                // 1. Revertir estado anterior (si era online) y guardar metadata de tareas
                 const oldSnap = await getDoc(docRef);
+                let savedTasksMetadata = [];
                 if (oldSnap.exists()) {
-                    await revertStockAndTasks({ id: oldSnap.id, ...oldSnap.data() });
+                    savedTasksMetadata = await revertStockAndTasks({ id: oldSnap.id, ...oldSnap.data() }) || [];
                 }
 
-                // 2. Actualizar transacción
+                // 2. Actualizar transacción (sin tocar createdAt ni fullDate)
                 const { id, createdAt, ...dataToUpdate } = cleanData;
                 await updateDoc(docRef, dataToUpdate);
                 
-                // 3. Aplicar nuevo estado (si es online)
-                await applyStockAndTasks({ id: txData.id, ...dataToUpdate });
+                // 3. Aplicar nuevo estado (si es online), restaurando metadata de tareas guardadas
+                await applyStockAndTasks({ id: txData.id, ...dataToUpdate }, savedTasksMetadata);
                 
-                console.log('✅ Transacción actualizada y sincronizada');
+                console.log('✅ Transacción actualizada y sincronizada (tareas preservadas con su estado original)');
             } else {
                 console.log('➕ Creando nueva transacción');
                 const { id, ...newTxData } = cleanData;
                 const docRef = await addDoc(collectionRef, { ...newTxData, createdAt: serverTimestamp() });
                 
-                // Aplicar stock y tareas para la nueva transacción
-                await applyStockAndTasks({ id: docRef.id, ...newTxData });
+                // Aplicar stock y tareas para la nueva transacción (sin metadata previa)
+                await applyStockAndTasks({ id: docRef.id, ...newTxData }, []);
                 
                 console.log('✅ Transacción creada y sincronizada');
             }
         } catch (e) {
             console.error('❌ Error al guardar transacción:', e);
             alert(`Error al guardar: ${e.message}`);
+            setIsSavingTransaction(false); // Desactivar loading
             return;
         }
+        setIsSavingTransaction(false); // Desactivar loading
         setShowTransactionModal(false); setEditingTransaction(null);
     };
 
@@ -733,6 +782,7 @@ export default function App() {
             alert('Error: No hay usuario autenticado.');
             return;
         }
+        setIsSavingTransaction(true); // Activar loading
         try {
             const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', id);
             
@@ -748,12 +798,16 @@ export default function App() {
         } catch (e) {
             console.error('❌ Error al eliminar:', e);
             alert(`Error al eliminar: ${e.message}`);
+            setIsSavingTransaction(false); // Desactivar loading
+            return;
         }
+        setIsSavingTransaction(false); // Desactivar loading
         setShowTransactionModal(false); setEditingTransaction(null);
     };
 
     const handleSaveStock = async (itemData) => {
         if (!user) return;
+        setIsSavingStock(true); // Activar loading
         const collectionRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock');
         const historyRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stockHistory');
         const cleanData = { ...itemData };
@@ -819,12 +873,19 @@ export default function App() {
                     createdAt: serverTimestamp()
                 });
             }
-        } catch (e) { console.error(e); alert("Error al guardar stock."); }
+        } catch (e) { 
+            console.error(e); 
+            alert("Error al guardar stock."); 
+            setIsSavingStock(false); // Desactivar loading
+            return;
+        }
+        setIsSavingStock(false); // Desactivar loading
         setShowStockModal(false); setEditingStock(null);
     };
 
     const handleDeleteStock = async (id) => {
         if (!user) return;
+        setIsSavingStock(true); // Activar loading
 
         try {
             // Obtener datos del item antes de eliminarlo
@@ -854,7 +915,11 @@ export default function App() {
                     createdAt: serverTimestamp()
                 });
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error(e); 
+            setIsSavingStock(false); // Desactivar loading
+        }
+        setIsSavingStock(false); // Desactivar loading
         setShowStockModal(false); setEditingStock(null);
     };
 
@@ -1009,11 +1074,23 @@ export default function App() {
             </nav>
 
             {showTransactionModal && (
-                <AddTransactionScreen onClose={() => { setShowTransactionModal(false); setEditingTransaction(null); }} onSave={handleSaveTransaction} onDelete={handleDeleteTransaction} initialData={editingTransaction} />
+                <AddTransactionScreen 
+                    onClose={() => { setShowTransactionModal(false); setEditingTransaction(null); }} 
+                    onSave={handleSaveTransaction} 
+                    onDelete={handleDeleteTransaction} 
+                    initialData={editingTransaction}
+                    isSaving={isSavingTransaction}
+                />
             )}
 
             {showStockModal && (
-                <AddStockScreen onClose={() => { setShowStockModal(false); setEditingStock(null); }} onSave={handleSaveStock} onDelete={handleDeleteStock} initialData={editingStock} />
+                <AddStockScreen 
+                    onClose={() => { setShowStockModal(false); setEditingStock(null); }} 
+                    onSave={handleSaveStock} 
+                    onDelete={handleDeleteStock} 
+                    initialData={editingStock}
+                    isSaving={isSavingStock}
+                />
             )}
 
             {showAnalyticsModal && (

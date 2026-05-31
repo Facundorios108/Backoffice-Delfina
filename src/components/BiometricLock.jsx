@@ -206,10 +206,8 @@ export default function BiometricLock({ onUnlock, userName = 'Usuario' }) {
         const hasPin = localStorage.getItem('delfina_backup_pin');
         if (!isSupported && !hasPin) {
             onUnlock();
-        } else if (isSettingUpPin) {
-            // Si está configurando PIN por primera vez, puede cancelar y desbloquear
-            onUnlock();
         }
+        // NO permitir omitir durante configuración de PIN - la seguridad es obligatoria
     };
 
     return (
@@ -338,15 +336,6 @@ export default function BiometricLock({ onUnlock, userName = 'Usuario' }) {
                                 <span className="material-symbols-outlined">check_circle</span>
                                 {isSettingUpPin ? 'Guardar PIN' : 'Desbloquear'}
                             </button>
-                            
-                            {isSettingUpPin && (
-                                <button
-                                    onClick={handleSkip}
-                                    className="w-full px-6 py-3 bg-gray-100 text-text-muted rounded-2xl font-semibold hover:bg-gray-200 transition-colors"
-                                >
-                                    Omitir por ahora
-                                </button>
-                            )}
                             
                             {!isSettingUpPin && isSupported && (
                                 <button

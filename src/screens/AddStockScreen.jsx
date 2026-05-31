@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PRODUCT_TYPES, STOCK_CATEGORIES } from '../constants';
 
-function AddStockScreen({ onClose, onSave, onDelete, initialData }) {
+function AddStockScreen({ onClose, onSave, onDelete, initialData, isSaving = false }) {
     const [name, setName] = useState(initialData?.name || '');
     const [collection, setCollection] = useState(initialData?.collection || '');
     const [category, setCategory] = useState(initialData?.category || '');
@@ -122,12 +122,30 @@ function AddStockScreen({ onClose, onSave, onDelete, initialData }) {
                     </div>
 
                     <div className="flex flex-col gap-3">
-                        <button type="submit" className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-pink-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg">
-                            <span>{isEditing ? 'Guardar Cambios' : 'Crear Producto'}</span>
-                            <span className="material-symbols-outlined">check</span>
+                        <button 
+                            type="submit" 
+                            disabled={isSaving}
+                            className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-pink-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <span>Guardando...</span>
+                                    <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>{isEditing ? 'Guardar Cambios' : 'Crear Producto'}</span>
+                                    <span className="material-symbols-outlined">check</span>
+                                </>
+                            )}
                         </button>
                         {isEditing && (
-                            <button type="button" onClick={() => onDelete(initialData.id)} className="w-full bg-red-50 text-red-500 font-bold py-4 px-6 rounded-2xl border border-red-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg hover:bg-red-100">
+                            <button 
+                                type="button" 
+                                onClick={() => onDelete(initialData.id)} 
+                                disabled={isSaving}
+                                className="w-full bg-red-50 text-red-500 font-bold py-4 px-6 rounded-2xl border border-red-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
                                 <span>Eliminar Producto</span>
                                 <span className="material-symbols-outlined">delete</span>
                             </button>
