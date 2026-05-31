@@ -31,14 +31,14 @@ function LoginScreen({ onLoginGoogle, onLoginGuest, onLoginEmail, onRegisterEmai
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-background-light flex flex-col justify-center items-center p-6 overflow-y-auto">
-            <div className="w-full max-w-md bg-white rounded-3xl shadow-soft border border-pink-50 p-8 space-y-6 animate-fade-in relative overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-background-light flex flex-col justify-center items-center p-6 overflow-y-auto pb-12">
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-soft border border-pink-50 p-8 space-y-6 animate-fade-in relative overflow-hidden my-8">
                 {/* Decoración superior */}
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary via-pink-400 to-primary"></div>
 
                 {/* Logo */}
                 <div className="flex flex-col items-center gap-2 mt-2">
-                    <img src="/logo-delfina.png" alt="Delfina Logo" className="w-16 h-16 object-contain" />
+                    <img src="/logo-delfina.png" alt="Delfina Logo" className="w-28 h-28 rounded-full object-cover shadow-lg border-4 border-pink-50" />
                     <h2 className="text-2xl font-bold text-text-main tracking-tight mt-2">Delfina Concept</h2>
                     <p className="text-xs text-text-muted font-medium uppercase tracking-wider">Gestión Financiera & Stock</p>
                 </div>
